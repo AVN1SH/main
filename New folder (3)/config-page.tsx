@@ -1,0 +1,1382 @@
+"use client";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "sonner";
+import {
+  Settings,
+  Save,
+  GraduationCap,
+  Layout,
+  Settings2,
+  FileJson,
+  HelpCircle,
+  Plus,
+  Trash2,
+  X,
+  ChevronDown,
+  Pencil,
+  ToggleLeft,
+  ToggleRight,
+} from "lucide-react";
+import Link from "next/link";
+
+const STATIC_OPTIONS: Record<string, string[]> = {
+  "step-board": ["CBSE", "BSEB", "ICSE"],
+  "step-paperType": ["Sample Paper", "Chapter Test", "Subject Test", "Full Syllabus Test"],
+  "step-language": ["Hindi", "English"],
+  "step-paper": ["Paper 1", "Paper 2"],
+};
+
+const STEP_PRESETS: Record<string, { label: string; icon: string; config: any }> = {
+  "step-board": {
+    label: "Board Selection",
+    icon: "📋",
+    config: {
+      id: "step-board",
+      key_name: "board",
+      text: "Which board are you studying under?",
+      options: ["CBSE", "BSEB"],
+    },
+  },
+  "step-subject": {
+    label: "Subject Selection",
+    icon: "📚",
+    config: {
+      id: "step-subject",
+      key_name: "subject",
+      text: "Got it. And which subject would you like to continue with?",
+      options: [],
+      fetchType: "subjects",
+    },
+  },
+  "step-paperType": {
+    label: "Paper Type",
+    icon: "📝",
+    config: {
+      id: "step-paperType",
+      key_name: "paperType",
+      text: "**Perfect!** I have all the details.\n\nWhat would you like to generate?",
+      options: ["Sample Paper", "Chapter Test", "Subject Test"],
+    },
+  },
+  "step-chapter": {
+    label: "Chapter Selection",
+    icon: "📖",
+    config: {
+      id: "step-chapter",
+      key_name: "chapter",
+      text: "Great! Which **Chapter** would you like to generate the test for?",
+      options: [],
+      fetchType: "chapters",
+      condition: { key: "paperType", value: "Chapter Test" },
+    },
+  },
+  "step-language": {
+    label: "Language Selection",
+    icon: "🌐",
+    config: {
+      id: "step-language",
+      key_name: "language",
+      text: "Which **language** would you like the paper to be generated in?",
+      options: ["Hindi", "English"],
+    },
+  },
+  "step-paper": {
+    label: "Paper Selection",
+    icon: "📄",
+    config: {
+      id: "step-paper",
+      key_name: "paper",
+      text: "Which **paper** would you like to generate?",
+      options: ["Paper 1", "Paper 2"],
+      condition: { key: "paperType", value: "Full Syllabus Test" },
+    },
+  },
+  "step-subject-chapters": {
+    label: "Chapter Selection (Subject Test)",
+    icon: "📑",
+    config: {
+      id: "step-subject-chapters",
+      key_name: "selectedChapters",
+      text: "**Great!** Which chapters would you like to include? Select one or more, or choose **All Chapters**.",
+      options: [],
+      fetchType: "chapters-multi",
+      isMultiSelect: true,
+      condition: { key: "paperType", value: "Subject Test" },
+    },
+  },
+};
+
+type StepPresetId = keyof typeof STEP_PRESETS;
+
+const isPresetStep = (id: string): id is StepPresetId => id in STEP_PRESETS;
+
+const getStepPresetId = (step: any): StepPresetId | null => {
+  if (step.id && isPresetStep(step.id)) return step.id;
+  return null;
+};
+
+export default function ConfigPage() {
+  const [gradeSteps, setGradeSteps] = useState<any[]>([]);
+  const [testConfig, setTestConfig] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<"grades" | "settings">("grades");
+  const [selectedGrade, setSelectedGrade] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [addCourseOpen, setAddCourseOpen] = useState(false);
+  const [newCourse, setNewCourse] = useState({ gradeId: "", defaultExamType: "" });
+  const [addStepOpen, setAddStepOpen] = useState(false);
+  const [togglingGrade, setTogglingGrade] = useState<string | null>(null);
+  const [customOptionInputs, setCustomOptionInputs] = useState<Record<number, string>>({});
+  // Map: stepIndex -> fetched options array
+  const [dynamicFetchedOptions, setDynamicFetchedOptions] = useState<Record<number, string[]>>({});
+  const [dynamicFetchLoading, setDynamicFetchLoading] = useState<Record<number, boolean>>({});
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [stepsRes, configRes] = await Promise.all([
+        axios.get("/api/admin/grade-steps"),
+        axios.get("/api/admin/test-config"),
+      ]);
+      setGradeSteps(stepsRes.data);
+      setTestConfig(configRes.data);
+      if (stepsRes.data.length > 0 && !selectedGrade) {
+        setSelectedGrade(stepsRes.data[0]);
+      }
+    } catch {
+      toast.error("Failed to load configuration");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch dynamic options (subjects/chapters) for each dynamic step when selectedGrade changes
+  const fetchDynamicStepOptions = async (grade: any) => {
+    if (!grade?.steps) return;
+    const newFetched: Record<number, string[]> = {};
+    const newLoading: Record<number, boolean> = {};
+    const promises = grade.steps.map(async (step: any, index: number) => {
+      if (step.fetchType !== "subjects" && step.fetchType !== "chapters") return;
+      newLoading[index] = true;
+      setDynamicFetchLoading((prev) => ({ ...prev, [index]: true }));
+      try {
+        let url = "";
+        if (step.fetchType === "subjects") {
+          url = `/api/syllabus/subjects?class=${encodeURIComponent(grade.gradeId)}`;
+          if (grade.defaultExamType) url += `&examType=${encodeURIComponent(grade.defaultExamType)}`;
+        } else if (step.fetchType === "chapters") {
+          // For chapters preview in config, we can't know subject yet, show placeholder
+          url = `/api/syllabus/subjects?class=${encodeURIComponent(grade.gradeId)}`;
+          if (grade.defaultExamType) url += `&examType=${encodeURIComponent(grade.defaultExamType)}`;
+          // chapters depend on subject; we'll show a note instead
+          newFetched[index] = [];
+          return;
+        }
+        if (url) {
+          const res = await axios.get(url);
+          newFetched[index] = res.data?.subjects || res.data?.chapters || [];
+        }
+      } catch {
+        newFetched[index] = [];
+      } finally {
+        setDynamicFetchLoading((prev) => ({ ...prev, [index]: false }));
+      }
+    });
+    await Promise.all(promises);
+    setDynamicFetchedOptions(newFetched);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (selectedGrade) {
+      setDynamicFetchedOptions({});
+      fetchDynamicStepOptions(selectedGrade);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedGrade?.gradeId]);
+
+  const handleSaveGrade = async () => {
+    if (!selectedGrade) return;
+    try {
+      toast.loading("Saving grade...", { id: "save-grade" });
+      await axios.post("/api/admin/grade-steps", selectedGrade);
+      toast.success("Grade steps updated", { id: "save-grade" });
+      fetchData();
+    } catch {
+      toast.error("Failed to save grade steps", { id: "save-grade" });
+    }
+  };
+
+  const handleSaveConfig = async () => {
+    try {
+      toast.loading("Saving settings...", { id: "save-config" });
+      await axios.post("/api/admin/test-config", testConfig);
+      toast.success("Settings updated", { id: "save-config" });
+      fetchData();
+    } catch {
+      toast.error("Failed to save test config", { id: "save-config" });
+    }
+  };
+
+  const handleUpdateStepText = (index: number, text: string) => {
+    if (!selectedGrade) return;
+    const newSteps = [...selectedGrade.steps];
+    newSteps[index] = { ...newSteps[index], text };
+    setSelectedGrade({ ...selectedGrade, steps: newSteps });
+  };
+
+  const handleDeleteStep = (index: number) => {
+    if (!selectedGrade) return;
+    if (!confirm("Delete this step? This cannot be undone.")) return;
+    const newSteps = selectedGrade.steps.filter(
+      (_: any, i: number) => i !== index,
+    );
+    setSelectedGrade({ ...selectedGrade, steps: newSteps });
+  };
+
+  const handleAddPresetStep = (presetId: StepPresetId) => {
+    if (!selectedGrade) return;
+    const preset = STEP_PRESETS[presetId];
+    const newStep: any = { ...preset.config };
+
+    if (STATIC_OPTIONS[presetId]) {
+      newStep.options = [...STATIC_OPTIONS[presetId]];
+    }
+
+    if (presetId === "step-subject" || presetId === "step-chapter") {
+      newStep._checkingSyllabus = true;
+      const gradeId = selectedGrade.gradeId;
+      const examType = selectedGrade.defaultExamType;
+      let url = `/api/syllabus/subjects?class=${encodeURIComponent(gradeId)}`;
+      if (examType) url += `&examType=${encodeURIComponent(examType)}`;
+
+      axios.get(url).then((res) => {
+        const subjects = res.data?.subjects || [];
+        if (subjects.length === 0) {
+          setSelectedGrade((prev: any) => {
+            if (!prev) return prev;
+            const updatedSteps = [...prev.steps];
+            const stepIndex = updatedSteps.findIndex((s: any) => s.id === presetId && s._checkingSyllabus);
+            if (stepIndex === -1) return prev;
+            updatedSteps[stepIndex] = {
+              ...updatedSteps[stepIndex],
+              _checkingSyllabus: false,
+              _syllabusMissing: true,
+            };
+            return { ...prev, steps: updatedSteps };
+          });
+        } else {
+          setSelectedGrade((prev: any) => {
+            if (!prev) return prev;
+            const updatedSteps = [...prev.steps];
+            const stepIndex = updatedSteps.findIndex((s: any) => s.id === presetId && s._checkingSyllabus);
+            if (stepIndex === -1) return prev;
+            updatedSteps[stepIndex] = {
+              ...updatedSteps[stepIndex],
+              _checkingSyllabus: false,
+            };
+            return { ...prev, steps: updatedSteps };
+          });
+        }
+      }).catch(() => {
+        setSelectedGrade((prev: any) => {
+          if (!prev) return prev;
+          const updatedSteps = [...prev.steps];
+          const stepIndex = updatedSteps.findIndex((s: any) => s.id === presetId && s._checkingSyllabus);
+          if (stepIndex === -1) return prev;
+          updatedSteps[stepIndex] = {
+            ...updatedSteps[stepIndex],
+            _checkingSyllabus: false,
+          };
+          return { ...prev, steps: updatedSteps };
+        });
+      });
+    }
+
+    setSelectedGrade((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        steps: [...(prev.steps || []), newStep],
+      };
+    });
+    setAddStepOpen(false);
+  };
+
+  const normalizeGradeId = (s: string) =>
+    s.trim().toLowerCase().replace(/\s+/g, "_");
+
+  const normalizeExamType = (s: string) =>
+    s.trim().toUpperCase().replace(/\s+/g, "_");
+
+  const handleAddCourse = async () => {
+    const rawGrade = newCourse.gradeId.trim();
+    if (!rawGrade) {
+      toast.error("Grade is required");
+      return;
+    }
+    const gradeId = normalizeGradeId(rawGrade);
+    try {
+      toast.loading("Creating course...", { id: "add-course" });
+      const courseData = {
+        gradeId,
+        gradeName: rawGrade,
+        defaultExamType: normalizeExamType(newCourse.defaultExamType || rawGrade),
+        steps: [],
+        finalStep: {
+          id: "final-step",
+          text: `**Thank you**, I'm generating for **{class}** - **{subject}**.`,
+          key_name: "last",
+        },
+      };
+      await axios.post("/api/admin/grade-steps", courseData);
+      toast.success("Course created", { id: "add-course" });
+      setAddCourseOpen(false);
+      setNewCourse({ gradeId: "", defaultExamType: "" });
+      fetchData();
+    } catch {
+      toast.error("Failed to create course", { id: "add-course" });
+    }
+  };
+
+  const handleDeleteCourse = async (gradeId: string) => {
+    if (!confirm(`Delete course "${gradeId}"? This cannot be undone.`)) return;
+    try {
+      toast.loading("Deleting course...", { id: "delete-course" });
+      await axios.delete(`/api/admin/grade-steps?gradeId=${encodeURIComponent(gradeId)}`);
+      toast.success("Course deleted", { id: "delete-course" });
+      if (selectedGrade?.gradeId === gradeId) {
+        setSelectedGrade(null);
+      }
+      fetchData();
+    } catch {
+      toast.error("Failed to delete course", { id: "delete-course" });
+    }
+  };
+
+  const handleMoveStep = (index: number, direction: "up" | "down") => {
+    if (!selectedGrade) return;
+    const newSteps = [...selectedGrade.steps];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newSteps.length) return;
+    [newSteps[index], newSteps[targetIndex]] = [newSteps[targetIndex], newSteps[index]];
+    setSelectedGrade({ ...selectedGrade, steps: newSteps });
+  };
+
+  const handleToggleActive = async (gradeId: string) => {
+    const grade = gradeSteps.find((g: any) => g.gradeId === gradeId);
+    const current = grade?.active !== false;
+    const newActive = !current;
+    setGradeSteps((prev: any[]) =>
+      prev.map((g: any) =>
+        g.gradeId === gradeId ? { ...g, active: newActive } : g,
+      ),
+    );
+    try {
+      setTogglingGrade(gradeId);
+      await axios.post("/api/admin/grade-steps", {
+        gradeId,
+        active: newActive,
+      });
+      toast.success(
+        newActive
+          ? `"${gradeId}" is now visible in the app`
+          : `"${gradeId}" hidden from the app`,
+        { id: `toggle-${gradeId}` },
+      );
+    } catch {
+      setGradeSteps((prev: any[]) =>
+        prev.map((g: any) =>
+          g.gradeId === gradeId ? { ...g, active: current } : g,
+        ),
+      );
+      toast.error("Failed to update course visibility", {
+        id: `toggle-${gradeId}`,
+      });
+    } finally {
+      setTogglingGrade(null);
+    }
+  };
+
+  const handleAddCustomOption = (stepIndex: number) => {
+    if (!selectedGrade) return;
+    const value = (customOptionInputs[stepIndex] || "").trim();
+    if (!value) return;
+    const newSteps = [...selectedGrade.steps];
+    const step = { ...newSteps[stepIndex] };
+    step.options = [...(step.options || []), value];
+    newSteps[stepIndex] = step;
+    setSelectedGrade({ ...selectedGrade, steps: newSteps });
+    setCustomOptionInputs((prev) => ({ ...prev, [stepIndex]: "" }));
+  };
+
+  if (loading)
+    return (
+      <div className="p-8 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 font-bold">Synchronizing Config...</p>
+        </div>
+      </div>
+    );
+
+  return (
+    <div className="p-8 max-w-7xl mx-auto space-y-8">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+            Steps <span className="text-amber-500">Configuration</span>
+          </h1>
+          <p className="text-slate-500 font-medium">
+            Define multi-step workflows and global engine settings.
+          </p>
+        </div>
+        <div className="flex gap-4">
+          <button
+            onClick={
+              activeTab === "grades" ? handleSaveGrade : handleSaveConfig
+            }
+            className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-2xl hover:bg-indigo-600 shadow-xl shadow-indigo-500/10 transition-all"
+          >
+            <Save className="size-4" />
+            Save Changes
+          </button>
+        </div>
+      </header>
+
+      <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 w-fit">
+        <button
+          onClick={() => setActiveTab("grades")}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all ${
+            activeTab === "grades"
+              ? "bg-slate-900 text-white shadow-lg"
+              : "text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          <GraduationCap className="size-4" />
+          Grade-wise Steps
+        </button>
+        <button
+          onClick={() => setActiveTab("settings")}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-black transition-all ${
+            activeTab === "settings"
+              ? "bg-slate-900 text-white shadow-lg"
+              : "text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          <Settings2 className="size-4" />
+          Global Settings
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {activeTab === "grades" ? (
+          <>
+            <div className="lg:col-span-3 space-y-3">
+              <div className="flex items-center justify-between pl-2">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Select Grade
+                </h3>
+                <button
+                  onClick={() => setAddCourseOpen(true)}
+                  className="flex items-center gap-1 text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-widest transition-colors"
+                >
+                  <Plus className="size-3" />
+                  Add
+                </button>
+              </div>
+              {gradeSteps.map((grade) => {
+                const isActive = grade.active !== false;
+                const isToggling = togglingGrade === grade.gradeId;
+                return (
+                  <div
+                    key={grade.gradeId}
+                    className={`group w-full flex items-center justify-between px-4 py-4 rounded-2xl font-bold transition-all text-sm border cursor-pointer ${
+                      selectedGrade?.gradeId === grade.gradeId
+                        ? "bg-white text-indigo-600 border-indigo-100 shadow-lg shadow-indigo-500/5 translate-x-1"
+                        : "text-slate-500 hover:bg-white hover:text-slate-900 border-transparent"
+                    } ${!isActive ? "opacity-50" : ""}`}
+                    onClick={() => setSelectedGrade(grade)}
+                  >
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate">
+                        {grade.gradeName || grade.gradeId}
+                      </span>
+                      {grade.gradeName && grade.gradeName !== grade.gradeId && (
+                        <span className="text-[10px] font-mono text-slate-400 mt-0.5 truncate">
+                          {grade.gradeId}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleActive(grade.gradeId);
+                        }}
+                        disabled={isToggling}
+                        title={
+                          isActive
+                            ? "Visible in app — click to hide"
+                            : "Hidden from app — click to show"
+                        }
+                        className={`opacity-0 group-hover:opacity-100 p-1.5 rounded-lg transition-all disabled:opacity-50 ${
+                          isActive
+                            ? "text-emerald-500 hover:text-slate-400"
+                            : "text-slate-300 hover:text-emerald-500"
+                        }`}
+                      >
+                        {isToggling ? (
+                          <div className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : isActive ? (
+                          <ToggleRight className="size-5" />
+                        ) : (
+                          <ToggleLeft className="size-5" />
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCourse(grade.gradeId);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all"
+                        title="Delete course"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              {gradeSteps.length === 0 && (
+                <div className="text-center py-8 text-slate-400 text-sm font-medium">
+                  No courses yet. Click &quot;Add&quot; to create one.
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-9 space-y-8">
+              {selectedGrade && (
+                <div className="space-y-8 animate-fadeIn">
+
+                  {/* ── Course Display Name card ── */}
+                  <div className="bg-white px-8 py-6 rounded-[32px] shadow-sm border border-slate-100 flex items-center justify-between gap-6">
+                    <div className="flex-1 min-w-0">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
+                        Course Display Name
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          className="flex-1 min-w-0 text-xl font-black text-slate-900 bg-transparent border-b-2 border-transparent hover:border-slate-200 focus:border-indigo-400 outline-none transition-colors py-0.5"
+                          value={selectedGrade.gradeName ?? selectedGrade.gradeId}
+                          onChange={(e) =>
+                            setSelectedGrade({ ...selectedGrade, gradeName: e.target.value })
+                          }
+                          placeholder="Display name shown to users"
+                        />
+                        <Pencil className="size-4 text-slate-300 shrink-0" />
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Internal ID (unchangeable):{" "}
+                        <span className="font-mono text-slate-500">{selectedGrade.gradeId}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-xl font-black text-slate-900">
+                          Sequence of Steps
+                        </h3>
+                        <span className="text-xs text-slate-400 font-medium">
+                          {selectedGrade.steps?.length || 0} steps configured
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <button
+                          onClick={() => setAddStepOpen(!addStepOpen)}
+                          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-xs font-black rounded-xl hover:bg-indigo-700 transition-all"
+                        >
+                          <Plus className="size-3.5" />
+                          Add Step
+                          <ChevronDown className="size-3" />
+                        </button>
+                        {addStepOpen && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setAddStepOpen(false)}
+                            />
+                            <div className="absolute right-0 top-full mt-2 z-20 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 space-y-0.5">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 pt-2 pb-1">
+                                Step Type
+                              </p>
+                              {Object.entries(STEP_PRESETS)
+                                .filter(
+                                  ([id]) =>
+                                    !(selectedGrade.steps || []).some(
+                                      (s: any) => s.id === id,
+                                    ),
+                                )
+                                .map(([id, preset]) => (
+                                  <button
+                                    key={id}
+                                    onClick={() =>
+                                      handleAddPresetStep(id as StepPresetId)
+                                    }
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-all text-left"
+                                  >
+                                    <span className="text-base">
+                                      {preset.icon}
+                                    </span>
+                                    <span>{preset.label}</span>
+                                  </button>
+                                ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {selectedGrade.steps?.map((step: any, index: number) => {
+                        const presetId = getStepPresetId(step);
+                        const preset = presetId ? STEP_PRESETS[presetId] : null;
+                        const isDynamic =
+                          step.fetchType === "subjects" ||
+                          step.fetchType === "chapters" ||
+                          step.fetchType === "chapters-multi";
+
+                        return (
+                          <div
+                            key={index}
+                            className="p-6 bg-slate-50 rounded-2xl border border-slate-100"
+                          >
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="size-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-black text-xs shrink-0">
+                                {index + 1}
+                              </div>
+                              {preset ? (
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-black text-indigo-600 uppercase">
+                                      {preset.icon} {preset.label}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono bg-slate-200 px-1.5 py-0.5 rounded">
+                                      {step.id}
+                                    </span>
+                                    {isDynamic &&
+                                      step.fetchType === "subjects" && (
+                                        <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded uppercase">
+                                          Dynamic
+                                        </span>
+                                      )}
+                                    {isDynamic &&
+                                      step.fetchType === "chapters" && (
+                                        <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-black rounded uppercase">
+                                          Dynamic
+                                        </span>
+                                      )}
+                                    {step.fetchType === "chapters-multi" && (
+                                      <span className="px-1.5 py-0.5 bg-violet-100 text-violet-700 text-[10px] font-black rounded uppercase">
+                                        Multi-Select
+                                      </span>
+                                    )}
+                                    {step.condition && (
+                                      <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-black rounded uppercase">
+                                        Conditional
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[10px] text-slate-400 font-mono">
+                                      key: {step.key_name}
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex-1 min-w-0">
+                                  <input
+                                    className="text-xs font-black text-indigo-600 uppercase bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-400 outline-hidden w-full"
+                                    value={step.id || ""}
+                                    onChange={(e) => {
+                                      const newSteps = [...selectedGrade.steps];
+                                      newSteps[index] = {
+                                        ...newSteps[index],
+                                        id: e.target.value,
+                                      };
+                                      setSelectedGrade({
+                                        ...selectedGrade,
+                                        steps: newSteps,
+                                      });
+                                    }}
+                                    placeholder="step-id"
+                                  />
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[10px] text-slate-400 font-mono">
+                                      key:
+                                    </span>
+                                    <input
+                                      className="text-[10px] text-slate-400 font-mono bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-400 outline-hidden"
+                                      value={step.key_name || ""}
+                                      onChange={(e) => {
+                                        const newSteps = [
+                                          ...selectedGrade.steps,
+                                        ];
+                                        newSteps[index] = {
+                                          ...newSteps[index],
+                                          key_name: e.target.value,
+                                        };
+                                        setSelectedGrade({
+                                          ...selectedGrade,
+                                          steps: newSteps,
+                                        });
+                                      }}
+                                      placeholder="key_name"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleMoveStep(index, "up")}
+                                  disabled={index === 0}
+                                  className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                  title="Move up"
+                                >
+                                  <svg
+                                    className="size-4"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M10 18a.75.75 0 01-.75-.75V5.81L5.03 9.78a.75.75 0 01-1.06-1.06l5.5-5.5a.75.75 0 011.06 0l5.5 5.5a.75.75 0 01-1.06 1.06l-4.22-3.97v11.44A.75.75 0 0110 18z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => handleMoveStep(index, "down")}
+                                  disabled={
+                                    index === selectedGrade.steps.length - 1
+                                  }
+                                  className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                  title="Move down"
+                                >
+                                  <svg
+                                    className="size-4"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M10 2a.75.75 0 01.75.75v11.44l4.22-3.97a.75.75 0 111.06 1.06l-5.5 5.5a.75.75 0 01-1.06 0l-5.5-5.5a.75.75 0 011.06-1.06l4.22 3.97V2.75A.75.75 0 0110 2z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteStep(index)}
+                                  className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all"
+                                  title="Delete step"
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="ml-0 space-y-4">
+                              <textarea
+                                className="w-full p-4 bg-white border border-slate-100 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 resize-none"
+                                value={step.text}
+                                onChange={(e) =>
+                                  handleUpdateStepText(index, e.target.value)
+                                }
+                                placeholder="Question text..."
+                                rows={2}
+                              />
+
+                              {isDynamic ? (
+                                <div className="space-y-3">
+                                  {/* Info banner */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex items-center gap-3 px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 text-xs font-medium">
+                                      <span className="text-base">
+                                        {step.fetchType === "subjects"
+                                          ? "📚"
+                                          : "📖"}
+                                      </span>
+                                      <span>
+                                        Fetches{" "}
+                                        <strong>{step.fetchType}</strong>{" "}
+                                        dynamically from syllabus database.
+                                        {step.fetchType === "subjects" &&
+                                          " Options are loaded based on grade and board."}
+                                        {step.fetchType === "chapters" &&
+                                          " Options are loaded based on grade, board, and subject."}
+                                      </span>
+                                    </div>
+                                    {step.condition && (
+                                      <div className="flex items-center gap-3 px-4 py-3 bg-purple-50 border border-purple-200 rounded-xl text-purple-700 text-xs font-medium">
+                                        <span>🔗</span>
+                                        <span>
+                                          Only shown when{" "}
+                                          <strong>{step.condition.key}</strong>{" "}
+                                          ={" "}
+                                          <strong>
+                                            {String(step.condition.value)}
+                                          </strong>
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Dynamic option pills */}
+                                  <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">
+                                      {step.fetchType === "subjects" ? "Fetched Subjects" : "Chapter Options"}
+                                      <span className="ml-2 normal-case text-slate-300 font-medium">— click to disable/enable</span>
+                                    </label>
+                                    {step.fetchType === "chapters" ? (
+                                      <p className="text-xs text-slate-400 font-medium italic px-1">
+                                        Chapter options depend on the subject selected at runtime and cannot be previewed here.
+                                      </p>
+                                    ) : dynamicFetchLoading[index] ? (
+                                      <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                                        <div className="size-3.5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                        Loading options from database...
+                                      </div>
+                                    ) : (dynamicFetchedOptions[index] || []).length === 0 ? (
+                                      <div className="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium">
+                                        <span className="text-base mt-0.5">⚠️</span>
+                                        <span>
+                                          No {step.fetchType} found for <strong>{selectedGrade.gradeId}</strong>
+                                          {selectedGrade.defaultExamType ? ` (${selectedGrade.defaultExamType})` : ""}.
+                                          Please first add the syllabus in the{" "}
+                                          <Link href="/private/dashboard/data" className="text-amber-900 underline font-bold hover:text-amber-700">
+                                            Feed Database
+                                          </Link>{" "}
+                                          tab.
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <div className="flex flex-wrap gap-2">
+                                        {(dynamicFetchedOptions[index] || []).map((opt: string) => {
+                                          const inActive: string[] = step.inActiveOptions || [];
+                                          const isDisabled = inActive.includes(opt);
+                                          return (
+                                            <button
+                                              key={opt}
+                                              type="button"
+                                              title={isDisabled ? "Disabled — click to enable" : "Enabled — click to disable"}
+                                              onClick={() => {
+                                                const newSteps = [...selectedGrade.steps];
+                                                const current: string[] = newSteps[index].inActiveOptions || [];
+                                                newSteps[index] = {
+                                                  ...newSteps[index],
+                                                  inActiveOptions: isDisabled
+                                                    ? current.filter((o) => o !== opt)
+                                                    : [...current, opt],
+                                                };
+                                                setSelectedGrade({ ...selectedGrade, steps: newSteps });
+                                              }}
+                                              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                                                isDisabled
+                                                  ? "bg-red-50 text-red-400 border-red-200 line-through opacity-60 hover:opacity-100 hover:bg-red-100"
+                                                  : "bg-emerald-600 text-white border-emerald-600 shadow-sm hover:bg-emerald-700"
+                                              }`}
+                                            >
+                                              {opt}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                    {(step.inActiveOptions || []).length > 0 && (
+                                      <p className="text-[10px] text-red-500 font-bold mt-2 ml-1">
+                                        {step.inActiveOptions.length} option{step.inActiveOptions.length > 1 ? "s" : ""} disabled and hidden from users.
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  {step._checkingSyllabus && (
+                                    <div className="flex items-center gap-3 px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 text-xs font-medium">
+                                      <div className="size-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                                      Checking syllabus database for{" "}
+                                      <strong>{selectedGrade.gradeId}</strong>
+                                      ...
+                                    </div>
+                                  )}
+                                  {step._syllabusMissing && (
+                                    <div className="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium">
+                                      <span className="text-base mt-0.5">
+                                        ⚠️
+                                      </span>
+                                      <span>
+                                        No syllabus found for{" "}
+                                        <strong>{selectedGrade.gradeId}</strong>
+                                        {selectedGrade.defaultExamType
+                                          ? ` (${selectedGrade.defaultExamType})`
+                                          : ""}
+                                        . Please first add the syllabus in the{" "}
+                                        <Link
+                                          href="/private/dashboard/data"
+                                          className="text-amber-900 underline font-bold hover:text-amber-700"
+                                        >
+                                          Feed Database
+                                        </Link>{" "}
+                                        tab to show options dynamically when
+                                        users reach this step.
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">
+                                      Static Options
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                      {presetId && STATIC_OPTIONS[presetId]
+                                        ? (
+                                          <>
+                                            {STATIC_OPTIONS[presetId].map(
+                                              (opt) => {
+                                                const selected = (
+                                                  step.options || []
+                                                ).includes(opt);
+                                                return (
+                                                  <button
+                                                    key={opt}
+                                                    type="button"
+                                                    onClick={() => {
+                                                      if (selected && !confirm(`Remove "${opt}"?`)) return;
+                                                      const newSteps = [
+                                                        ...selectedGrade.steps,
+                                                      ];
+                                                      const current =
+                                                        newSteps[index].options ||
+                                                        [];
+                                                      newSteps[index] = {
+                                                        ...newSteps[index],
+                                                        options: selected
+                                                          ? current.filter(
+                                                              (o: string) =>
+                                                                o !== opt,
+                                                            )
+                                                          : [...current, opt],
+                                                      };
+                                                      setSelectedGrade({
+                                                        ...selectedGrade,
+                                                        steps: newSteps,
+                                                      });
+                                                    }}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                                                      selected
+                                                        ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                                                        : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                                                    }`}
+                                                  >
+                                                    {opt}
+                                                  </button>
+                                                );
+                                              },
+                                            )}
+                                            {(step.options || [])
+                                              .filter(
+                                                (o: string) =>
+                                                  !STATIC_OPTIONS[presetId].includes(o),
+                                              )
+                                              .map((opt: string) => (
+                                                <button
+                                                  key={opt}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    if (!confirm(`Remove "${opt}"?`)) return;
+                                                    const newSteps = [
+                                                      ...selectedGrade.steps,
+                                                    ];
+                                                    newSteps[index] = {
+                                                      ...newSteps[index],
+                                                      options: (
+                                                        newSteps[index]
+                                                          .options || []
+                                                      ).filter(
+                                                        (o: string) =>
+                                                          o !== opt,
+                                                      ),
+                                                    };
+                                                    setSelectedGrade({
+                                                      ...selectedGrade,
+                                                      steps: newSteps,
+                                                    });
+                                                  }}
+                                                  className="group relative px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white border-indigo-600 hover:bg-red-600 hover:border-red-600 transition-all"
+                                                >
+                                                  {opt}
+                                                  <span className="ml-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <X className="size-3 inline" />
+                                                  </span>
+                                                </button>
+                                              ))}
+                                          </>
+                                        )
+                                        : (step.options || []).map(
+                                            (opt: string) => (
+                                              <span
+                                                key={opt}
+                                                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white border-indigo-600"
+                                              >
+                                                {opt}
+                                              </span>
+                                            ),
+                                          )}
+                                    </div>
+                                    {(!presetId || presetId !== "step-paperType") && (
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <input
+                                          type="text"
+                                          placeholder="Add custom option..."
+                                          value={customOptionInputs[index] || ""}
+                                          onChange={(e) =>
+                                            setCustomOptionInputs((prev) => ({
+                                              ...prev,
+                                              [index]: e.target.value,
+                                            }))
+                                          }
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                              e.preventDefault();
+                                              handleAddCustomOption(index);
+                                            }
+                                          }}
+                                          className="flex-1 p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => handleAddCustomOption(index)}
+                                          className="flex items-center gap-1 px-2 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all"
+                                        >
+                                          <Plus className="size-3" />
+                                          Add
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {step.condition && (
+                                    <div className="flex items-center gap-3 px-4 py-3 bg-purple-50 border border-purple-200 rounded-xl text-purple-700 text-xs font-medium">
+                                      <span>🔗</span>
+                                      <span>
+                                        Only shown when{" "}
+                                        <strong>{step.condition.key}</strong> ={" "}
+                                        <strong>
+                                          {String(step.condition.value)}
+                                        </strong>
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {(!selectedGrade.steps ||
+                        selectedGrade.steps.length === 0) && (
+                        <div className="text-center py-12 text-slate-400 text-sm font-medium bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                          No steps configured yet. Click &quot;Add Step&quot; to
+                          build the workflow.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 p-8 rounded-[32px] text-white space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-black flex items-center gap-2">
+                        <Layout className="size-5 text-indigo-400" />
+                        Success Template
+                      </h3>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        key: {selectedGrade.finalStep?.key_name || "last"}
+                      </span>
+                    </div>
+                    <p className="text-slate-400 text-sm font-medium">
+                      This text is shown just before generation. Use curly
+                      braces for variables.
+                    </p>
+                    <textarea
+                      className="w-full p-6 bg-slate-800 border border-slate-700 rounded-2xl text-indigo-100 font-bold focus:ring-2 focus:ring-indigo-500 resize-none"
+                      rows={2}
+                      value={selectedGrade.finalStep?.text || ""}
+                      onChange={(e) =>
+                        setSelectedGrade({
+                          ...selectedGrade,
+                          finalStep: {
+                            ...selectedGrade.finalStep,
+                            text: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+              {!selectedGrade && gradeSteps.length > 0 && (
+                <div className="flex items-center justify-center min-h-[300px] bg-slate-50 rounded-[32px] border border-dashed border-slate-200">
+                  <p className="text-slate-400 text-sm font-medium">
+                    Select a grade from the sidebar to edit its steps.
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="lg:col-span-12 space-y-8 animate-fadeIn">
+            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-indigo-600 text-white p-2 rounded-lg shadow-lg">
+                    <Settings className="size-5" />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900">
+                    System Settings
+                  </h3>
+                </div>
+                <div className="space-y-4">
+                  <div className="bg-slate-50 p-6 rounded-2xl flex items-center justify-between border border-slate-100">
+                    <div>
+                      <p className="text-sm font-black text-slate-900">
+                        Current Academic Year
+                      </p>
+                      <p className="text-xs text-slate-500 font-bold mt-1">
+                        Default value for new papers
+                      </p>
+                    </div>
+                    <input
+                      type="number"
+                      className="w-24 p-3 bg-white border border-slate-200 rounded-xl text-center font-black text-indigo-600 shadow-sm"
+                      value={testConfig?.settings?.defaultYear || 2026}
+                      onChange={(e) =>
+                        setTestConfig({
+                          ...testConfig,
+                          settings: {
+                            ...testConfig.settings,
+                            defaultYear: Number(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-indigo-600 p-8 rounded-[32px] text-white flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileJson className="size-6 text-indigo-200" />
+                    <h3 className="text-2xl font-black">Raw JSON Access</h3>
+                  </div>
+                  <p className="text-indigo-100 text-sm font-medium mb-8">
+                    Need full control? Edit entire test configuration as JSON.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setJsonEditorOpen(true)}
+                  className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3"
+                >
+                  Open JSON Editor
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-indigo-600 text-white p-2 rounded-lg shadow-lg">
+                  <HelpCircle className="size-5" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900">
+                  Global Prompt Context
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {testConfig?.grades &&
+                  Object.keys(testConfig.grades).map((gradeKey) => (
+                    <div
+                      key={gradeKey}
+                      className="p-4 bg-slate-50 rounded-2xl border border-slate-100"
+                    >
+                      <p className="text-[10px] font-black text-slate-400 ml-1 mb-2 uppercase tracking-widest">
+                        {gradeKey}
+                      </p>
+                      <input
+                        type="text"
+                        className="w-full bg-transparent font-bold text-slate-700 text-sm focus:outline-hidden"
+                        value={testConfig.grades[gradeKey]?.promptContext || ""}
+                        onChange={(e) => {
+                          const newGrades = { ...testConfig.grades };
+                          newGrades[gradeKey] = {
+                            ...newGrades[gradeKey],
+                            promptContext: e.target.value,
+                          };
+                          setTestConfig({ ...testConfig, grades: newGrades });
+                        }}
+                      />
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {jsonEditorOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">
+                  Raw JSON Editor
+                </h2>
+                <p className="text-sm text-slate-500 font-medium">
+                  Edit entire test configuration
+                </p>
+              </div>
+              <button
+                onClick={() => setJsonEditorOpen(false)}
+                className="size-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center font-black text-slate-500"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 p-6 overflow-hidden">
+              <textarea
+                className={`w-full h-full min-h-[400px] p-6 bg-slate-900 rounded-2xl text-indigo-100 font-mono text-sm focus:ring-2 focus:ring-indigo-500 resize-none ${jsonError ? "ring-2 ring-red-500" : ""}`}
+                value={JSON.stringify(testConfig, null, 2)}
+                onChange={(e) => {
+                  setJsonError(null);
+                  try {
+                    const parsed = JSON.parse(e.target.value);
+                    setTestConfig(parsed);
+                  } catch {
+                    setJsonError("Invalid JSON - syntax error");
+                  }
+                }}
+                spellCheck={false}
+              />
+              {jsonError && (
+                <p className="text-red-500 text-sm font-bold mt-2">
+                  {jsonError}
+                </p>
+              )}
+            </div>
+            <div className="p-6 border-t border-slate-100 flex gap-4 justify-end">
+              <button
+                onClick={() => setJsonEditorOpen(false)}
+                className="px-6 py-3 bg-slate-100 text-slate-700 font-black rounded-2xl hover:bg-slate-200 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  handleSaveConfig();
+                  setJsonEditorOpen(false);
+                }}
+                className="px-6 py-3 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all flex items-center gap-2"
+              >
+                <Save className="size-4" />
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {addCourseOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">
+                  Add New Course
+                </h2>
+                <p className="text-sm text-slate-500 font-medium">
+                  Create a new grade configuration
+                </p>
+              </div>
+              <button
+                onClick={() => setAddCourseOpen(false)}
+                className="size-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center font-black text-slate-500"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="p-6 space-y-5">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">
+                  Grade
+                </label>
+                <input
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                  value={newCourse.gradeId}
+                  onChange={(e) =>
+                    setNewCourse({ ...newCourse, gradeId: e.target.value })
+                  }
+                  placeholder="e.g. 11th, 9th, CUET"
+                />
+                <p className="text-[10px] text-slate-400 mt-1 ml-1">
+                  Will be saved as{" "}
+                  <strong>{newCourse.gradeId.trim() || "—"}</strong>
+                </p>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">
+                  Default Exam Type (optional)
+                </label>
+                <input
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                  value={newCourse.defaultExamType}
+                  onChange={(e) =>
+                    setNewCourse({
+                      ...newCourse,
+                      defaultExamType: e.target.value,
+                    })
+                  }
+                  onBlur={(e) =>
+                    setNewCourse({
+                      ...newCourse,
+                      defaultExamType: normalizeExamType(e.target.value),
+                    })
+                  }
+                  placeholder="e.g. CBSE, ICSE, CUET"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-100 flex gap-4 justify-end">
+              <button
+                onClick={() => setAddCourseOpen(false)}
+                className="px-6 py-3 bg-slate-100 text-slate-700 font-black rounded-2xl hover:bg-slate-200 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddCourse}
+                className="px-6 py-3 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all flex items-center gap-2"
+              >
+                <Plus className="size-4" />
+                Create Course
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
