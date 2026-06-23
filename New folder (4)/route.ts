@@ -450,19 +450,46 @@ const generateQuestionsForSubject = async (
       if (syllabus) {
         context +=
           "\n\nSyllabus Weightage Instructions: Use percentage for JEE/NEET or other competative exams and marks (out of 80/100) for school exams. Higher weightage requires more questions from that chapter. If total weight < 100% or weight > 100% or max marks, adjust values proportionally in percentage to reach the 100% in total before selecting questions:\n" +
-          JSON.stringify(syllabus.chapter_weightage); + "If all the chapter weightage is 0 then calculate weightage from provided context to idendify the pattern and generate accordingly";
+          JSON.stringify(syllabus.chapter_weightage) + "If all the chapter weightage is 0 then calculate weightage from provided context to idendify the pattern and generate accordingly";
 
-        // If this subject has linked syllabus sections, append their weightage
-        const linkedSections = (syllabus as any).sections as any[];
-        if (linkedSections && linkedSections.length > 0) {
-          context +=
-            "\n\nLinked Subject Sections for common or basic or compulsory section of this subject includes (treat each as a distinct section of this subject, use their chapter weightage to distribute questions across these sections accordingly):\n" +
-            linkedSections
-              .map(
-                (sec: any) =>
-                  `Section — ${sec.subject.replace(/_/g, " ")} (${sec.exam_type}):\n${JSON.stringify(sec.chapter_weightage)}`,
-              )
-              .join("\n\n");
+        let hasSectionSpecificSyllabus = false;
+        if (subjectSections && subjectSections.length > 0) {
+          const sectionSyllabiContexts = await Promise.all(
+            subjectSections.map(async (sec: any) => {
+              if (sec.linkedSyllabusIds && sec.linkedSyllabusIds.length > 0) {
+                const linkedDocs = await SyllabusModel.find({
+                  _id: { $in: sec.linkedSyllabusIds },
+                });
+                if (linkedDocs.length > 0) {
+                  hasSectionSpecificSyllabus = true;
+                  return `\n\nLinked Syllabus for Section "${sec.sectionName}" (Use this chapter weightage specifically for generating questions belonging to the "${sec.sectionName}" section):\n` +
+                    linkedDocs
+                      .map((d: any) => `Subject: ${d.subject.replace(/_/g, " ")} (${d.exam_type}):\n${JSON.stringify(d.chapter_weightage)}`)
+                      .join("\n\n");
+                }
+              }
+              return null;
+            })
+          );
+          const validSectionContexts = sectionSyllabiContexts.filter(Boolean);
+          if (validSectionContexts.length > 0) {
+            context += validSectionContexts.join("\n");
+          }
+        }
+
+        // If no section-specific syllabus was found, fallback to the legacy global linked sections
+        if (!hasSectionSpecificSyllabus) {
+          const linkedSections = (syllabus as any).sections as any[];
+          if (linkedSections && linkedSections.length > 0) {
+            context +=
+              "\n\nLinked Subject Sections for common or basic or compulsory section of this subject includes (treat each as a distinct section of this subject, use their chapter weightage to distribute questions across these sections accordingly):\n" +
+              linkedSections
+                .map(
+                  (sec: any) =>
+                    `Section — ${sec.subject.replace(/_/g, " ")} (${sec.exam_type}):\n${JSON.stringify(sec.chapter_weightage)}`,
+                )
+                .join("\n\n");
+          }
         }
       }
     }
