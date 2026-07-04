@@ -1,0 +1,13 @@
+// First do a dry run to preview
+fetch('/api/migration/backfill-subject-ids', {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({dryRun: true})
+}).then(r=>r.json()).then(d=>console.log(d));
+
+// Then run for real
+fetch('/api/migration/backfill-subject-ids', {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({dryRun: false})
+}).then(r=>r.json()).then(d=>console.log(d));
