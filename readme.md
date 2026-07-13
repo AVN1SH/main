@@ -15,3 +15,5 @@ bash
 
 git diff --name-only HEAD | xargs -I{} bash -c 'mkdir -p "/destination/folder/$(dirname "{}")" && cp "{}" "/destination/folder/{}"'
 
+
+https://filebin.net/kzhtuivz4pepe400 
