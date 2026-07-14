@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-fredoka), sans-serif;
+}
+
+/* ------------------------------------------------------------------ */
+/* Character animations                                               */
+/* These target inline <svg> character markup (see game/characters/*  */
+/* and game/dom.ts's addCharacterSprite) so parts of the character can */
+/* be animated individually — something a plain <img> can never do.   */
+/* ------------------------------------------------------------------ */
+
+.character-body {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 100%;
+  transform-box: fill-box;
+  animation: char-idle-shake 2.6s ease-in-out infinite;
+}
+
+@keyframes char-idle-shake {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-1.5px) rotate(-1.2deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-1.5px) rotate(1.2deg);
+  }
+}
+
+.char-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: char-blink 4.8s ease-in-out infinite;
+}
+
+@keyframes char-blink {
+  0%, 92%, 100% {
+    transform: scaleY(1);
+  }
+  94% {
+    transform: scaleY(0.12);
+  }
+  96% {
+    transform: scaleY(1);
+  }
+}
+
+.char-hand {
+  transform-box: fill-box;
+  transform-origin: center top;
+}
+
+.char-hand-left {
+  animation: char-hand-flap-left 0.5s ease-in-out infinite alternate;
+}
+
+.char-hand-right {
+  animation: char-hand-flap-right 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes char-hand-flap-left {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(40deg) translateY(-2px); }
+}
+
+@keyframes char-hand-flap-right {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-40deg) translateY(-2px); }
+}
+
+/* When jumping up, characters throw hands/wings up! */
+.char-jumping .char-hand-left {
+  animation: none !important;
+  transform: rotate(140deg) translateY(-10px) !important;
+}
+.char-jumping .char-hand-right {
+  animation: none !important;
+  transform: rotate(-140deg) translateY(-10px) !important;
+}
+
+/* Pause the idle animations while the character is taking damage /
+   flickering invulnerability, or during any state where a scene wants
+   the raw sprite instead — toggled via this class on the wrapper. */
+.character-body.char-anim-paused,
+.character-body.char-anim-paused .char-eye {
+  animation-play-state: paused;
+}
+
+/* ------------------------------------------------------------------ */
+/* Lobby character animations                                         */
+/* ------------------------------------------------------------------ */
+
+.character-bounce {
+  animation: char-bounce 2s ease-in-out infinite;
+}
+
+@keyframes char-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.character-excited {
+  animation: char-excited 8s ease-in-out infinite;
+}
+
+@keyframes char-excited {
+  0%, 50% { transform: translateY(0) scale(1) rotate(0deg); }
+  73% { transform: translateY(-10px) scale(1.08) rotate(-4deg); }
+  76% { transform: translateY(0) scale(1) rotate(0deg); }
+  79% { transform: translateY(-10px) scale(1.08) rotate(4deg); }
+  82% { transform: translateY(-3px) scale(1.04) rotate(0deg); }
+  85% { transform: translateY(0) scale(1) rotate(0deg); }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Rideable item zoom animations                                      */
+/* ------------------------------------------------------------------ */
+
+.item-zoom-in {
+  animation: item-zoom-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes item-zoom-in {
+  0% { scale: 0.2; opacity: 0; }
+  100% { scale: 1; opacity: 1; }
+}
+
+.item-zoom-out {
+  animation: item-zoom-out 0.4s ease-out forwards;
+}
+
+@keyframes item-zoom-out {
+  0% { scale: 1; opacity: 1; }
+  100% { scale: 0.2; opacity: 0; }
+}

@@ -1,0 +1,33 @@
+<svg width="277" height="60" viewBox="0 0 277 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 10C0 7.23858 2.23858 5 5 5H272C274.761 5 277 7.23858 277 10V50C277 52.7614 274.761 55 272 55H5C2.23858 55 0 52.7614 0 50V10Z" fill="#C3664E"/>
+<rect x="54" y="12" width="68" height="8" rx="4" fill="#AC5541"/>
+<rect x="8" y="12" width="18" height="8" rx="4" fill="#AC5541"/>
+<rect x="195" y="40" width="66" height="8" rx="4" fill="#AC5541"/>
+<rect x="146" width="60" height="15" rx="5" transform="rotate(90 146 0)" fill="#FFA461"/>
+<mask id="mask0_2043_2692" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="131" y="0" width="15" height="60">
+<rect x="146" width="60" height="15" rx="5" transform="rotate(90 146 0)" fill="#FFBF9A"/>
+</mask>
+<g mask="url(#mask0_2043_2692)">
+<path d="M146 59.969L131 52.2861L131 41.4427L146 49.1257L146 59.969Z" fill="#F69752"/>
+<path d="M146 39.248L131 31.565L131 20.7217L146 28.4046L146 39.248Z" fill="#F69752"/>
+<path d="M146 18.5264L131 10.8435L131 0.000126833L146 7.68305L146 18.5264Z" fill="#F69752"/>
+</g>
+<rect x="45" width="60" height="15" rx="5" transform="rotate(90 45 0)" fill="#FFA461"/>
+<mask id="mask1_2043_2692" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="30" y="0" width="15" height="60">
+<rect x="45" width="60" height="15" rx="5" transform="rotate(90 45 0)" fill="#FFBF9A"/>
+</mask>
+<g mask="url(#mask1_2043_2692)">
+<path d="M45 59.969L30 52.2861L30 41.4427L45 49.1257L45 59.969Z" fill="#F69752"/>
+<path d="M45 39.248L30 31.565L30 20.7217L45 28.4046L45 39.248Z" fill="#F69752"/>
+<path d="M45 18.5264L30 10.8435L30 0.000126833L45 7.68305L45 18.5264Z" fill="#F69752"/>
+</g>
+<rect x="247" width="60" height="15" rx="5" transform="rotate(90 247 0)" fill="#FFA461"/>
+<mask id="mask2_2043_2692" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="232" y="0" width="15" height="60">
+<rect x="247" width="60" height="15" rx="5" transform="rotate(90 247 0)" fill="#FFBF9A"/>
+</mask>
+<g mask="url(#mask2_2043_2692)">
+<path d="M247 59.969L232 52.2861L232 41.4427L247 49.1257L247 59.969Z" fill="#F69752"/>
+<path d="M247 39.248L232 31.565L232 20.7217L247 28.4046L247 39.248Z" fill="#F69752"/>
+<path d="M247 18.5264L232 10.8435L232 0.000126833L247 7.68305L247 18.5264Z" fill="#F69752"/>
+</g>
+</svg>

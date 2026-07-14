@@ -1,0 +1,15 @@
+<svg width="196" height="102" viewBox="0 0 196 102" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 10C0 7.23857 2.23858 5 5 5H191C193.761 5 196 7.23858 196 10V92C196 94.7614 193.761 97 191 97H5C2.23857 97 0 94.7614 0 92V10Z" fill="#C3664E"/>
+<rect x="196" y="61" width="18" height="196" transform="rotate(90 196 61)" fill="#AC5541"/>
+<rect x="196" y="23" width="18" height="196" transform="rotate(90 196 23)" fill="#AC5541"/>
+<rect x="73" y="23" width="50" height="39" rx="5" fill="#FFD705"/>
+<rect x="40" width="102" height="20" rx="5" transform="rotate(90 40 0)" fill="black"/>
+<rect x="176" width="102" height="20" rx="5" transform="rotate(90 176 0)" fill="black"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M103 45.4845C105.412 43.8699 107 41.1204 107 38C107 33.0294 102.971 29 98 29C93.0294 29 89 33.0294 89 38C89 41.1204 90.588 43.8699 93 45.4845V51C93 53.7614 95.2386 56 98 56C100.761 56 103 53.7614 103 51V45.4845Z" fill="#FDA006"/>
+<circle cx="166" cy="15" r="5" fill="#FDA006"/>
+<circle cx="166" cy="51" r="5" fill="#FDA006"/>
+<circle cx="166" cy="87" r="5" fill="#FDA006"/>
+<circle cx="30" cy="15" r="5" fill="#FDA006"/>
+<circle cx="30" cy="51" r="5" fill="#FDA006"/>
+<circle cx="30" cy="87" r="5" fill="#FDA006"/>
+</svg>
