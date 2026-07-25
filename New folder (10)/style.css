@@ -1,0 +1,2237 @@
+/* ============================================================
+   STREET SHOOTER — Tactical FPS HUD
+   Clean, minimal, semi-transparent, modern aesthetic
+   ============================================================ */
+
+:root {
+  --accent: #4caf50; /* Tactical green */
+  --accent-alert: #ff3333;
+  --bg-dark: rgba(0, 0, 0, 0.45);
+  --bg-darker: rgba(0, 0, 0, 0.65);
+  --text-main: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.6);
+  --outline: rgba(255, 255, 255, 0.15);
+
+  --font-display: "Rajdhani", sans-serif;
+  --font-ui: "Inter", sans-serif;
+  --font-luckiest:
+    "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0f0f11;
+  font-family: var(--font-ui);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+canvas {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── HUD ROOT ─────────────────────────────────────────── */
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* ══════════════════════════════════════════════════════
+   TOP-LEFT: HP PANEL
+══════════════════════════════════════════════════════ */
+#hp-panel {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  width: clamp(200px, 30vw, 300px);
+  height: clamp(60px, 8vw, 68px);
+  pointer-events: none;
+  z-index: 110;
+}
+
+#hp-value {
+  position: absolute;
+  left: 68%;
+  top: 50%;
+  transform: translate(-30%, -80%);
+  z-index: 2;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(12px, 1.2vw, 25px);
+  color: #fff;
+  text-shadow:
+    1px 2px 0 #000,
+    0 0 10px rgba(255, 50, 50, 0.5);
+  letter-spacing: 1px;
+}
+
+/* Label text for HEALTH / SCORE / KILLS — sits above values */
+.hud-label {
+  position: absolute;
+  z-index: 3;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(10px, 1vw, 18px);
+  color: rgba(0, 0, 0, 0.9);
+  letter-spacing: 1.5px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+#hp-label {
+  left: 30%;
+  top: 50%;
+  transform: translate(-30%, -80%);
+}
+
+#score-label {
+  left: 25%;
+  top: 50%;
+  transform: translate(0%, -50%);
+}
+
+#kill-label {
+  left: 28%;
+  top: 50%;
+  transform: translate(0%, -50%);
+}
+
+/* Health bar fill image — clipped to bar region, shrinks on damage */
+#hp-bar-fill {
+  z-index: 1;
+  clip-path: inset(0 7.1% 0 47.7%); /* full health = bar region visible */
+  transition: clip-path 0.25s ease-out; /* smooth shrink on damage */
+}
+
+/* Low-health warning pulse */
+#hp-bar-fill.critical {
+  animation: hp-critical-pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes hp-critical-pulse {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
+/* Empty ammo pulse — bottom-right ammo count turns red and pulses when gun is empty */
+#ammo-current.empty {
+  animation: ammo-empty-pulse 0.5s ease-in-out infinite alternate;
+  color: var(--accent-alert);
+}
+
+@keyframes ammo-empty-pulse {
+  0% {
+    opacity: 1;
+    text-shadow: 0 0 12px rgba(255, 50, 50, 0.9), 1px 2px 0 #000;
+  }
+  100% {
+    opacity: 0.45;
+    text-shadow: 0 0 4px rgba(255, 50, 50, 0.3), 1px 2px 0 #000;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   TOP-CENTER: WAVE TEXT (hidden — kept for JS compat)
+   ══════════════════════════════════════════════════════ */
+#wave-display {
+  display: none !important;
+}
+#wave-text {
+  display: none;
+}
+
+/* ══════════════════════════════════════════════════════
+   TOP-RIGHT: SCORE OVERLAY  (score.webp background)
+══════════════════════════════════════════════════════ */
+#score-overlay {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  width: clamp(160px, 18vw, 240px);
+  height: clamp(60px, 8vw, 68px);
+  pointer-events: none;
+  z-index: 110;
+}
+
+#kill-overlay {
+  position: fixed;
+  top: calc(14px + clamp(40px, 6vw, 68px) + 6px);
+  right: 14px;
+  width: clamp(160px, 18vw, 240px);
+  height: clamp(60px, 8vw, 68px);
+  pointer-events: none;
+  z-index: 110;
+}
+
+#settings-overlay-btn {
+  position: fixed;
+  top: calc(14px + clamp(40px, 6vw, 68px) + 6px + clamp(60px, 8vw, 68px) + 6px);
+  right: 14px;
+  z-index: 115;
+  pointer-events: auto;
+}
+
+#settings-overlay-btn .btn-setting {
+  width: clamp(32px, 5vw, 40px);
+  height: clamp(32px, 5vw, 40px);
+}
+
+.overlay-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+#score-value {
+  position: absolute;
+  left: 60%;
+  top: 50%;
+  transform: translate(0%, -50%);
+  z-index: 1;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(12px, 1.2vw, 25px);
+  color: #fff;
+  text-shadow:
+    1px 2px 0 #000,
+    0 0 10px rgba(255, 200, 0, 0.5);
+  letter-spacing: 1px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+#kill-value {
+  position: absolute;
+  left: 60%;
+  top: 50%;
+  transform: translate(0%, -50%);
+  z-index: 1;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(12px, 1.2vw, 25px);
+  color: #fff;
+  text-shadow:
+    1px 2px 0 #000,
+    0 0 10px rgba(255, 200, 0, 0.5);
+  letter-spacing: 1px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════
+   BOTTOM-RIGHT: AMMO RING
+══════════════════════════════════════════════════════ */
+#ammo-panel {
+  position: fixed;
+  bottom: clamp(14px, 2vw, 30px);
+  right: clamp(14px, 2vw, 30px);
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+  justify-content: flex-end;
+  pointer-events: none;
+  z-index: 110;
+}
+
+#ammo-bg-img {
+  height: clamp(60px, 8vw, 80px);
+  width: 30px;
+  object-fit: cover;
+  margin-bottom: 0.5rem;
+}
+
+#ammo-ring-container {
+  position: relative;
+  width: clamp(90px, 12vw, 120px);
+  height: clamp(90px, 12vw, 120px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#ammo-ring-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#ammo-ring-bg {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 2;
+  stroke-dasharray: 4 4; /* Tick marks effect */
+}
+
+#ammo-ring-fill {
+  stroke: var(--text-main);
+  stroke-width: 3;
+  transition: stroke-dashoffset 0.15s ease-out;
+}
+
+#ammo-center {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: center;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  color: #fff;
+  text-shadow:
+    1px 2px 0 #000,
+    0 0 10px rgba(255, 200, 0, 0.5);
+}
+
+#ammo-current {
+  font-size: clamp(18px, 2vw, 32px);
+  color: #fff;
+}
+
+#ammo-sep {
+  font-size: clamp(10px, 1.1vw, 20px);
+  margin: 0 4px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+#ammo-max {
+  font-size: clamp(10px, 1.1vw, 20px);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ══════════════════════════════════════════════════════
+   BOTTOM-LEFT: GUN PANEL — REMOVED (weapon-switch-btn only)
+══════════════════════════════════════════════════════ */
+#gun-panel {
+  display: none !important;
+}
+#gun-label {
+  display: none;
+}
+
+/* ══════════════════════════════════════════════════════
+   KILL TYPE POPUP  (headshot / bodyshot message)
+══════════════════════════════════════════════════════ */
+#kill-type-popup {
+  position: fixed;
+  left: 50%;
+  top: 12%;
+  transform: translate(-50%, -50%);
+  min-width: clamp(180px, 36vw, 280px);
+  max-width: min(86vw, 520px);
+  min-height: clamp(42px, 8vw, 58px);
+  padding: clamp(8px, 1.8vw, 14px) clamp(18px, 4vw, 34px);
+  box-sizing: border-box;
+  background: url("/assets/images/paper-text-bg-style.webp") center/cover
+    no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(16px, 3.5vw, 26px);
+  line-height: 1.05;
+  text-align: center;
+  color: #2a1200;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.4);
+  letter-spacing: 2px;
+  pointer-events: none;
+  z-index: 135;
+  opacity: 0;
+  border-radius: 4px;
+  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.5));
+}
+
+#kill-type-popup.show-kill {
+  animation: kill-popup-anim 1s ease-out forwards;
+}
+
+#kill-type-popup.show-collect {
+  font-size: clamp(13px, 2.6vw, 20px);
+  animation: kill-popup-anim 1.5s ease-out forwards;
+}
+
+@keyframes kill-popup-anim {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -44%);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -56%);
+  }
+}
+
+#combo-display {
+  position: fixed;
+  top: calc(
+    14px + clamp(40px, 6vw, 68px) + 6px + clamp(40px, 6vw, 60px)
+  );
+  left: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 136;
+}
+
+.combo-popup-item {
+  min-width: clamp(112px, 24vw, 170px);
+  min-height: clamp(30px, 6vw, 42px);
+  padding: 6px 16px;
+  box-sizing: border-box;
+  background: url("/assets/images/paper-text-bg-style.webp") center/cover
+    no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(12px, 2.4vw, 18px);
+  line-height: 1;
+  letter-spacing: 1.4px;
+  color: #2a1200;
+  text-align: center;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.4);
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
+  opacity: 0;
+  transform: translateX(-10px);
+  animation: combo-stack-in 0.18s ease-out forwards;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+.combo-popup-item.combo-hide {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+@keyframes combo-stack-in {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   CROSSHAIR
+══════════════════════════════════════════════════════ */
+#crosshair {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+  z-index: 110;
+  transition: transform 0.1s ease;
+}
+#crosshair.ads {
+  transform: translate(-50%, -50%) scale(0.4);
+  opacity: 0.5;
+}
+
+.ch-top,
+.ch-bottom,
+.ch-left,
+.ch-right {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.8);
+}
+.ch-top,
+.ch-bottom {
+  width: 1px;
+  height: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.ch-top {
+  top: 0;
+}
+.ch-bottom {
+  bottom: 0;
+}
+.ch-left,
+.ch-right {
+  height: 1px;
+  width: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ch-left {
+  left: 0;
+}
+.ch-right {
+  right: 0;
+}
+.ch-dot {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--text-main);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ══════════════════════════════════════════════════════
+   HIT MARKER
+══════════════════════════════════════════════════════ */
+#hit-marker {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+  z-index: 111;
+  opacity: 0;
+}
+.hm-tl,
+.hm-tr,
+.hm-bl,
+.hm-br {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: var(--text-main);
+  border-style: solid;
+}
+.hm-tl {
+  top: 0;
+  left: 0;
+  border-width: 1px 0 0 1px;
+}
+.hm-tr {
+  top: 0;
+  right: 0;
+  border-width: 1px 1px 0 0;
+}
+.hm-bl {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 1px 1px;
+}
+.hm-br {
+  bottom: 0;
+  right: 0;
+  border-width: 0 1px 1px 0;
+}
+#hit-marker.show {
+  animation: hm-flash 0.2s ease-out forwards;
+}
+@keyframes hm-flash {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   HIT VIGNETTE
+══════════════════════════════════════════════════════ */
+#hit-vignette {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(255, 0, 0, 0.4) 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99;
+  transition: opacity 0.1s ease-out;
+}
+
+/* ══════════════════════════════════════════════════════
+   LOADING SCREEN — Poster style
+══════════════════════════════════════════════════════ */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+}
+
+/* Full-bleed poster background */
+#ls-poster {
+  position: absolute;
+  inset: 0;
+  background: url("/assets/images/poster.webp") center center / cover no-repeat;
+  z-index: 0;
+}
+
+/* Gradient overlay — bottom darkens more to let UI breathe */
+#ls-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.12) 40%,
+    rgba(0, 0, 0, 0.68) 70%,
+    rgba(0, 0, 0, 0.82) 100%
+  );
+}
+
+/* Logo image — centred horizontally, upper area */
+#ls-logo {
+  position: absolute;
+  top: clamp(8px, 4%, 48px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(140px, min(72vw, 80vmin), 820px);
+  height: auto;
+  z-index: 2;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.7));
+  animation: ls-logo-drop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes ls-logo-drop {
+  from {
+    transform: translateX(-50%) translateY(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Decorative tip boards — bottom-left row */
+#ls-boards {
+  position: absolute;
+  bottom: 32px;
+  left: 28px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 2;
+}
+.ls-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ls-board img {
+  height: 90px;
+  width: auto;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+  transition: transform 0.2s ease;
+}
+.ls-board img:hover {
+  transform: scale(1.05);
+}
+
+/* Bottom-centre: LOADING text + bar + tip */
+#ls-bottom {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(520px, 58%);
+}
+
+#loading-text {
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(22px, 4vw, 34px);
+  letter-spacing: 4px;
+  color: #fff;
+  text-shadow:
+    2px 3px 0 #000,
+    0 0 18px rgba(255, 200, 0, 0.4);
+  margin-bottom: 2px;
+}
+
+/* Progress bar track */
+#ls-bar-track {
+  width: 100%;
+  height: 26px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 16px;
+  border: 3px solid #1a1008;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 2px 6px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Filled portion */
+#loading-progress {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to bottom, #ffe066 0%, #ffc200 45%, #e08000 100%);
+  border-radius: 12px;
+  transition: width 0.25s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glossy shine strip */
+#ls-bar-shine {
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  right: 6px;
+  height: 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.38);
+  pointer-events: none;
+}
+
+/* TIP row */
+#ls-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(11px, 1.8vw, 15px);
+  letter-spacing: 1.5px;
+  color: #fff;
+  text-shadow: 1px 2px 0 #000;
+}
+.ls-tip-label {
+  color: #ffe066;
+  font-size: clamp(12px, 2vw, 17px);
+  text-shadow:
+    1px 2px 0 #000,
+    0 0 8px rgba(255, 200, 0, 0.5);
+}
+#ls-tip-text {
+  color: rgba(255, 255, 255, 0.92);
+}
+@media (min-height: 400px) and (max-height: 800px) and (max-width: 900px) and (orientation: landscape) {
+  #ls-bottom {
+    margin-bottom: 12%;
+  }
+  #ls-boards {
+    gap: 6px;
+    left: 12px;
+    bottom: 18px;
+  }
+  .ls-board img {
+    height: 64px;
+  }
+}
+/* Responsive tweaks — portrait small */
+@media (max-width: 480px) and (orientation: portrait) {
+  #ls-boards {
+    gap: 6px;
+    left: 12px;
+    bottom: 18px;
+  }
+  .ls-board img {
+    height: 64px;
+  }
+  #ls-bottom {
+    margin-bottom: 30%;
+    width: 88%;
+  }
+  #ls-bar-track {
+    height: 20px;
+  }
+  #loading-text {
+    font-size: 20px;
+  }
+}
+@media (orientation: portrait) {
+  #ls-boards {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+  #ls-bottom {
+    width: 80%;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   LOADING SCREEN — Landscape mobile layout
+   Mirrors the desktop approach but scaled via vh:
+   · Logo shrinks and moves to top-left
+   · Boards line up horizontally at bottom-left (compact)
+   · Loading bar + text stay bottom-center but use vh sizing
+══════════════════════════════════════════════════════ */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* --- Logo: top-left, smaller, matches desktop anchor style --- */
+  #ls-logo {
+    top: auto;
+    bottom: calc(100% - 96px); /* pin near top */
+    top: 4px;
+  }
+
+  /* --- Boards: bottom-left row, same absolute-bottom-left anchor as desktop
+         but images shrunk so they fit the short viewport ---  */
+  #ls-boards {
+    bottom: 14px;
+    left: 14px;
+    gap: 6px;
+    flex-wrap: nowrap; /* force single row like desktop */
+    align-items: flex-end;
+  }
+  .ls-board img {
+    height: clamp(44px, 10vh, 56px); /* vh-based so it scales with height */
+    width: auto;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+  }
+
+  /* --- Bottom centre: narrower, margin-free, uses vh for gap/text --- */
+  #ls-bottom {
+    position: relative;
+    z-index: 2;
+    width: min(380px, 46%); /* narrower centre column */
+    gap: 6px;
+    margin-bottom: 18px; /* small fixed gap from viewport bottom */
+  }
+
+  #loading-text {
+    font-size: clamp(16px, 4vh, 24px);
+    margin-bottom: 0;
+  }
+
+  #ls-bar-track {
+    height: clamp(16px, 3.5vh, 22px);
+  }
+
+  #ls-tip {
+    font-size: clamp(9px, 1.8vh, 12px);
+    gap: 5px;
+  }
+  .ls-tip-label {
+    font-size: clamp(10px, 2vh, 13px);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   GAME OVER SAVE LOADING — shown while ytgame saves before modal
+══════════════════════════════════════════════════════ */
+#go-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+#go-loading-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.88);
+  backdrop-filter: blur(4px);
+}
+#go-loading-logo {
+  position: relative;
+  width: clamp(100px, 40vw, 280px);
+  height: auto;
+  animation: go-loading-pulse 0.8s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 20px rgba(255, 200, 0, 0.3));
+}
+@keyframes go-loading-pulse {
+  from { opacity: 0.3; }
+  to   { opacity: 1; }
+}
+
+/* ══════════════════════════════════════════════════════
+   GAME OVER POPUP — Redesigned with image assets
+══════════════════════════════════════════════════════ */
+#game-over-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: rgba(10, 10, 12, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  padding: 16px;
+  touch-action: manipulation;
+}
+
+#go-popup {
+  position: relative;
+  margin-top: 6vh;
+  width: min(420px, 92vw);
+  /* aspect-ratio alone controls height — no height:fit-content which conflicts */
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Extra top padding pushes content down away from the title overlap zone */
+  /* padding: clamp(48px, 12%, 80px) clamp(16px, 4vw, 36px) clamp(20px, 5%, 36px); */
+  border-radius: 12px;
+  overflow: hidden;
+  gap: clamp(10px, 2vw, 18px);
+  /* Distribute space so content fills the card naturally */
+  justify-content: center;
+}
+
+/* White background image that fills the popup */
+#go-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+  border-radius: 12px;
+}
+
+/* All popup content sits above the bg image */
+#go-popup > *:not(#go-bg-img) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Game Over title image ── */
+#go-title-wrap {
+  position: absolute;
+  transform: translateY(-75%);
+  display: flex;
+  justify-content: center;
+  margin-bottom: clamp(2px, 1vw, 8px);
+  z-index: 2;
+}
+
+#go-title-img {
+  width: min(85%, 280px);
+
+  height: fit-content;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+  animation: go-title-drop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes go-title-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Reason for game over ── */
+#go-reason {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.5vw, 12px);
+  opacity: 0;
+  animation: go-fade-in 0.5s ease-out 0.3s forwards;
+}
+
+.go-reason-icon {
+  width: clamp(24px, 5vw, 36px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+#go-reason-text {
+  font-family: var(--font-luckiest);
+  font-size: clamp(18px, 4vw, 28px);
+  letter-spacing: 3px;
+  color: #750000;
+  text-shadow:
+    1px 2px 0 rgba(0, 0, 0, 0.15),
+    0 1px 4px rgba(200, 0, 0, 0.2);
+  text-transform: uppercase;
+}
+
+#go-reason-text.ammo-reason {
+  color: #5d4300;
+  text-shadow:
+    1px 2px 0 rgba(0, 0, 0, 0.15),
+    0 1px 4px rgba(180, 130, 10, 0.2);
+}
+
+/* ── Score section with avatar and trophy icons ── */
+#go-score-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 16px);
+  width: 100%;
+  /* padding: clamp(8px, 2vw, 14px) 0; */
+  opacity: 0;
+  animation: go-fade-in 0.5s ease-out 0.6s forwards;
+}
+
+.go-score-icon {
+  width: clamp(40px, 8vw, 52px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+  flex-shrink: 0;
+}
+
+#go-score-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 16px);
+  overflow: hidden;
+}
+
+#go-score-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: clamp(90px, 20vw, 140px);
+  flex-shrink: 0;
+}
+
+#go-score-label {
+  font-family: var(--font-luckiest);
+  font-size: clamp(12px, 2.5vw, 14px);
+  letter-spacing: 3px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+#go-score-val {
+  font-family: var(--font-luckiest);
+  font-size: clamp(36px, 8vw, 42px);
+  color: #1a1a1a;
+  text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.08);
+  line-height: 1;
+  width: 100%;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Cash reward (appears after score counting finishes) ── */
+#go-cash-reward {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition: max-width 0.45s ease, opacity 0.45s ease;
+}
+
+#go-cash-reward.show {
+  max-width: 250px;
+  opacity: 1;
+}
+
+#go-cash-label {
+  font-family: var(--font-luckiest);
+  font-size: clamp(10px, 2vw, 12px);
+  letter-spacing: 2px;
+  color: #1d1d1d;
+  text-transform: uppercase;
+}
+
+#go-cash-val {
+  font-family: var(--font-luckiest);
+  font-size: clamp(16px, 3vw, 24px);
+  color: #016206;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.go-cash-icon {
+  width: clamp(20px, 4vw, 28px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* ── Gun stats section ── */
+#go-gun-stats {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(4px, 1vw, 8px);
+  width: 100%;
+  opacity: 0;
+  animation: go-fade-in 0.5s ease-out 1.4s forwards;
+}
+
+.go-gun-stat {
+  display: flex;
+  align-items: center;
+  gap: clamp(2px, 0.5vw, 4px);
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: clamp(5px, 1.2vw, 8px) clamp(0px,1vw,0px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.go-gun-img {
+  width: clamp(36px, 8vw, 45px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.go-grenade-stat {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  padding-right: 8px;
+}
+
+.go-grenade-name {
+  font-family: var(--font-luckiest);
+  font-size: clamp(10px, 2.5vw, 12px);
+  letter-spacing: 2px;
+  color: #444;
+  text-transform: uppercase;
+}
+
+.go-grenade-img {
+  width: clamp(18px, 8vw, 40px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.go-nade-kills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-luckiest);
+  font-size: clamp(20px, 4.5vw, 26px);
+  color: #1a1a1a;
+}
+
+.go-gun-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.go-gun-name {
+  font-family: var(--font-luckiest);
+  font-size: clamp(13px, 2.5vw, 14px);
+  letter-spacing: 2px;
+  color: #444;
+  text-transform: uppercase;
+}
+
+.go-gun-kills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-luckiest);
+  font-size: clamp(14px, 4.5vw, 20px);
+  color: #1a1a1a;
+}
+
+.go-mini-icon {
+  width: clamp(16px, 3vw, 22px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* ── Go to Lobby button ── */
+#go-lobby-btn {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0;
+  margin-top: clamp(4px, 1vw, 8px);
+  overflow: hidden;
+  border-radius: 8px;
+  min-width: clamp(180px, 45vw, 260px);
+  height: clamp(44px, 9vw, 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  animation: go-fade-in 0.5s ease-out 2.2s forwards;
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+#go-lobby-btn:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+#go-lobby-btn:active {
+  transform: scale(0.97);
+}
+
+.go-btn-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 8px;
+  z-index: 0;
+}
+
+.go-btn-text {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-luckiest);
+  font-size: clamp(16px, 3.5vw, 20px);
+  letter-spacing: 3px;
+  color: #1a1a1a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+}
+
+/* ── Shared fade-in animation for game over elements ── */
+@keyframes go-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Responsive: Mobile portrait ── */
+@media (max-width: 480px) {
+  /* Reduce top margin so popup doesn't shift up on short screens */
+  #go-popup {
+    margin-top: 3vh;
+    /* Keep generous top padding so content stays below the title overlap */
+    padding: clamp(44px, 11%, 70px) clamp(14px, 3vw, 22px) clamp(16px, 4%, 22px);
+    gap: clamp(8px, 2vw, 14px);
+  }
+
+  #go-title-img {
+    width: 80%;
+  }
+
+  /* Keep icons at readable size — DON'T shrink below desktop minimums */
+  .go-score-icon {
+    width: clamp(36px, 8vw, 48px);
+  }
+
+  #go-score-area {
+    width: clamp(110px, 22vw, 130px);
+  }
+
+  #go-score-val {
+    font-size: clamp(32px, 8vw, 44px);
+  }
+
+  #go-score-label {
+    font-size: clamp(20px, 2.8vw, 28px);
+  }
+
+  .go-gun-img {
+    width: clamp(46px, 11vw, 64px);
+  }
+
+  .go-gun-stat {
+    padding: clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 14px);
+  }
+
+  .go-gun-name {
+    font-size: clamp(12px, 2.8vw, 16px);
+  }
+
+  .go-gun-kills {
+    font-size: clamp(12px, 4.5vw, 24px);
+  }
+
+  #go-reason-text {
+    font-size: clamp(24px, 4vw, 28px);
+  }
+
+  #go-cash-val {
+    font-size: clamp(18px, 4.5vw, 26px);
+  }
+
+  .go-cash-icon {
+    width: clamp(16px, 3.5vw, 22px);
+  }
+
+  #go-lobby-btn {
+    min-width: clamp(170px, 45vw, 240px);
+    height: clamp(42px, 9vw, 52px);
+  }
+
+  .go-btn-text {
+    font-size: clamp(14px, 3.2vw, 18px);
+    letter-spacing: 2px;
+  }
+}
+
+/* ── Responsive: Very small screens ── */
+@media (max-width: 380px) {
+  #score-overlay {
+    width: clamp(140px, 18vw, 240px);
+    right: 0;
+  }
+
+  #kill-overlay {
+    width: clamp(140px, 18vw, 240px);
+    right: 0;
+  }
+  #hp-panel {
+    left: 0px;
+  }
+
+  #go-popup {
+    margin-top: 2vh;
+    padding: clamp(40px, 10%, 60px) clamp(10px, 2.5vw, 16px)
+      clamp(12px, 3%, 18px);
+    gap: clamp(6px, 1.5vw, 10px);
+  }
+
+  #go-score-section {
+    gap: clamp(6px, 1.5vw, 10px);
+  }
+
+  #go-score-val {
+    font-size: clamp(28px, 7.5vw, 40px);
+  }
+
+  #go-score-label {
+    font-size: clamp(18px, 2.5vw, 13px);
+  }
+
+  #go-cash-val {
+    font-size: clamp(16px, 4vw, 22px);
+  }
+
+  .go-cash-icon {
+    width: clamp(14px, 3vw, 20px);
+  }
+
+  .go-score-icon {
+    width: clamp(32px, 7vw, 44px);
+  }
+
+  #go-score-area {
+    width: clamp(70px, 20vw, 110px);
+  }
+
+  #go-gun-stats {
+    gap: clamp(6px, 1.5vw, 10px);
+  }
+
+  .go-gun-stat {
+    padding: clamp(4px, 1vw, 8px) clamp(6px, 1.5vw, 10px);
+    gap: clamp(3px, 0.8vw, 6px);
+  }
+
+  .go-gun-img {
+    width: clamp(30px, 10vw, 46px);
+  }
+
+  .go-gun-name {
+    font-size: clamp(10px, 2.5vw, 12px);
+  }
+
+  .go-gun-kills {
+    font-size: clamp(16px, 4vw, 22px);
+  }
+
+  #go-reason-text {
+    font-size: clamp(20px, 3.5vw, 20px);
+  }
+
+  #go-lobby-btn {
+    min-width: clamp(150px, 42vw, 220px);
+    height: clamp(38px, 8vw, 48px);
+  }
+
+  .go-btn-text {
+    font-size: clamp(14px, 3vw, 16px);
+  }
+}
+
+/* ── Responsive: Landscape mobile (mirrors settings popup approach) ── */
+@media (max-height: 600px) and (orientation: landscape) {
+  #go-popup {
+    position: relative; /* CRITICAL: Acts as the anchor point for the title */
+    margin-top: 40px; /* Creates a safe gap at the top of the viewport for the overlapping title */
+    width: clamp(320px, 92vh, 480px);
+    height: clamp(320px, 92vh, 480px);
+    aspect-ratio: 1 / 1 !important;
+    padding: clamp(10px, 3vh, 16px) clamp(16px, 4vw, 24px);
+    gap: clamp(4px, 1vh, 10px);
+    justify-content: center;
+  }
+
+  #go-bg-img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    transform: scale(1.01);
+  }
+
+  #go-title-wrap {
+    /* Absolute tracking completely fixes the alignment breaking */
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(
+      -50%,
+      -55%
+    ); /* Perfect horizontal centering + vertical overflow shift */
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 10;
+    margin-bottom: 0;
+    pointer-events: none; /* Stops the wrapper boundary from blocking touches underneath */
+  }
+
+  #go-title-img {
+    width: min(70%, 200px);
+    transform: translate(70%, 50%) rotate(15deg) !important;
+    animation: none;
+  }
+
+  #go-reason {
+    gap: clamp(6px, 1.5vh, 12px);
+    margin-top: 15px; /* Tiny push down to make clean breathing room under the title image */
+  }
+
+  .go-reason-icon {
+    width: clamp(26px, 6.5vh, 38px);
+  }
+
+  #go-reason-text {
+    font-size: clamp(18px, 5vh, 26px);
+    letter-spacing: 2px;
+  }
+
+  #go-score-section {
+    gap: clamp(8px, 2vh, 16px);
+  }
+
+  .go-score-icon {
+    width: clamp(38px, 9vh, 52px);
+  }
+
+  #go-score-area {
+    width: clamp(90px, 22vh, 140px);
+  }
+
+  #go-score-label {
+    font-size: clamp(14px, 3.5vh, 18px);
+    letter-spacing: 2.5px;
+  }
+
+  #go-score-val {
+    font-size: clamp(34px, 8.5vh, 52px);
+  }
+
+  #go-gun-stats {
+    gap: clamp(8px, 2vh, 18px);
+  }
+
+  .go-gun-stat {
+    padding: clamp(8px, 2vh, 14px) clamp(4px, 2.5vw, 10px);
+    gap: clamp(2px, 1vh, 4px);
+  }
+  .go-grenade-img {
+    padding: clamp(8px, 2vh, 14px) clamp(4px, 2.5vw, 10px);
+  }
+
+  .go-gun-img {
+    width: clamp(27px, 12vh, 26px);
+  }
+
+  .go-gun-name {
+    font-size: clamp(13px, 3.2vh, 17px);
+    letter-spacing: 1.5px;
+  }
+
+  .go-gun-kills {
+    font-size: clamp(16px, 5.5vh, 24px);
+  }
+
+  .go-mini-icon {
+    width: clamp(16px, 3.5vh, 22px);
+  }
+
+  #go-lobby-btn {
+    height: clamp(38px, 10vh, 50px);
+    min-width: 200px;
+    margin-top: 8px;
+  }
+
+  .go-btn-text {
+    font-size: clamp(15px, 3.8vh, 20px);
+    letter-spacing: 2px;
+  }
+}
+
+@media (max-height: 400px) and (orientation: landscape) {
+  #go-gun-stats {
+    gap: clamp(4px, 2vh, 10px);
+  }
+
+  .go-gun-stat {
+    padding: clamp(2px, 1vh, 10px) clamp(4px, 2.5vw, 10px);
+    gap: clamp(2px, 1vh, 4px);
+  }
+  .go-grenade-img {
+    padding: clamp(4px, 2vh, 10px) clamp(4px, 2.5vw, 10px);
+  }
+
+  .go-gun-img {
+    width: clamp(27px, 12vh, 26px);
+  }
+
+  .go-gun-name {
+    font-size: clamp(10px, 3.2vh, 13px);
+    letter-spacing: 1.5px;
+  }
+
+  .go-gun-kills {
+    font-size: clamp(12px, 5.5vh, 18px);
+  }
+
+  .go-mini-icon {
+    width: clamp(16px, 3.5vh, 22px);
+  }
+
+  #go-lobby-btn {
+    height: clamp(38px, 10vh, 50px);
+    min-width: 160px;
+    margin-top: 8px;
+  }
+
+  .go-btn-text {
+    font-size: clamp(15px, 3.8vh, 20px);
+    letter-spacing: 2px;
+  }
+}
+/* ── Responsive: Desktop large screens ── */
+@media (min-width: 1200px) {
+  #go-popup {
+    width: 440px;
+    padding: 48px 40px 36px;
+  }
+}
+
+/* ══════════════════════════════════
+   TACTICAL BUTTON SYSTEM
+══════════════════════════════════ */
+.big-btn,
+#restart-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  display: inline-block;
+}
+
+.btn-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--text-main);
+  padding: 16px 48px;
+  border: 1px solid var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+#restart-btn:hover .btn-face,
+.orange-btn:hover .btn-face {
+  background: var(--text-main);
+  color: #000;
+}
+
+#restart-btn:active .btn-face,
+.orange-btn:active .btn-face {
+  transform: scale(0.98);
+}
+
+/* ══════════════════════════════════════════════════════
+   WAVE CLEAR
+══════════════════════════════════════════════════════ */
+#wave-clear-msg {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--text-main);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 120;
+  animation: wc-fade 2.5s ease-out forwards;
+}
+#wave-clear-msg span {
+  display: none;
+} /* Hide emojis */
+
+@keyframes wc-fade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   ADVANCE BUTTON
+══════════════════════════════════════════════════════ */
+#advance-btn {
+  position: fixed;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 120;
+  pointer-events: auto;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCORE POPUP
+══════════════════════════════════════════════════════ */
+.score-popup {
+  position: fixed;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--text-main);
+  pointer-events: none;
+  z-index: 130;
+  animation: popup-float 1s ease-out forwards;
+}
+.score-popup.headshot {
+  color: var(--accent);
+}
+.score-popup.kill {
+  color: var(--text-main);
+}
+
+@keyframes popup-float {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════ */
+@media (orientation: portrait) {
+  #weapon-switch-btn {
+    bottom: 26px;
+    left: 14px;
+  }
+  #ls-bottom {
+    margin-bottom: 20%;
+  }
+}
+
+@media (orientation: landscape) {
+  #weapon-switch-btn {
+    bottom: 30px;
+    left: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  #kill-type-popup {
+    font-size: 15px;
+    min-width: 160px;
+    padding: 10px 20px;
+  }
+  #hp-value {
+    font-size: 10px;
+  }
+  #weapon-switch-btn {
+    bottom: 70px;
+  }
+  .wsb-hint {
+    display: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   WEAPON SWITCH BUTTON — anchored bottom-left
+══════════════════════════════════════════════════════ */
+#weapon-switch-btn {
+  position: fixed;
+  bottom: clamp(14px, 2vw, 30px);
+  left: clamp(14px, 2vw, 30px);
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  z-index: 115;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.wsb-guns-container {
+  position: relative;
+  width: clamp(120px, 20vw, 140px);
+  height: 80px;
+  transform: translateY(40%);
+}
+
+.gun-img {
+  position: absolute;
+  width: 100%;
+  height: auto;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center;
+}
+
+/* Active weapon (front) vs Inactive weapon (back) */
+#weapon-switch-btn[data-active="0"] #gun-img-0,
+#weapon-switch-btn[data-active="1"] #gun-img-1 {
+  z-index: 2;
+  bottom: 0;
+  right: 0;
+  transform: scale(1);
+  opacity: 1;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
+}
+
+#weapon-switch-btn[data-active="0"] #gun-img-1,
+#weapon-switch-btn[data-active="1"] #gun-img-0 {
+  z-index: 1;
+  bottom: 25px;
+  right: 20px;
+  transform: scale(0.7);
+  opacity: 0.5;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5)) grayscale(50%);
+}
+
+#weapon-switch-btn:hover .wsb-guns-container {
+  filter: brightness(1.2);
+}
+
+.wsb-hint {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 4px;
+}
+
+/* ══════════════════════════════════════════════════════
+   SNIPER SCOPE OVERLAY
+   Triggered by  body.sniper-scoped
+══════════════════════════════════════════════════════ */
+#sniper-scope {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 200;
+  /* Hidden by default */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.1s ease;
+}
+
+body.sniper-scoped #sniper-scope {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* -- Circular lens with box-shadow blackout -- */
+.scope-lens {
+  position: absolute;
+  width: min(90vh, 90vw);
+  height: min(90vh, 90vw);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  overflow: hidden;
+  /*
+    KEY: The spread-radius of 100vmax creates a solid black area
+    covering the ENTIRE screen outside this circle.
+    No mask divs needed — zero corner artifacts.
+  */
+  box-shadow:
+    0 0 0 100vmax rgba(0, 0, 0, 0.97),
+    inset 0 0 0 6px rgba(18, 18, 18, 0.98),
+    inset 0 0 0 11px rgba(60, 60, 60, 0.7),
+    inset 0 0 0 14px rgba(22, 22, 22, 0.92),
+    inset 0 0 0 17px rgba(75, 75, 75, 0.45),
+    inset 0 0 80px rgba(0, 0, 0, 0.4);
+  background: transparent;
+}
+
+/* Hide in-game grenade HUD while scoped (same z-index stack) */
+body.sniper-scoped #grenade-hud {
+  display: none !important;
+}
+
+/* -- Reticle SVG fills the lens -- */
+.scope-reticle {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* -- Lens vignette (dark ring inside circle edges) -- */
+.scope-vignette {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 52%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* -- Lens glare (top-left reflection) -- */
+.scope-glare {
+  position: absolute;
+  top: 5%;
+  left: 8%;
+  width: 32%;
+  height: 16%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 38% 48%,
+    rgba(255, 255, 255, 0.09) 0%,
+    transparent 68%
+  );
+  pointer-events: none;
+  transform: rotate(-28deg);
+  z-index: 3;
+}
+
+/* Slight military-green tint inside lens */
+.scope-lens::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(18, 48, 18, 0.07);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Scope-in zoom animation */
+@keyframes scope-in {
+  from {
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+body.sniper-scoped .scope-lens {
+  animation: scope-in 0.1s ease-out both;
+}
+
+/* ══════════════════════════════════════════════════════
+   ENEMY UI (FLOATING)
+══════════════════════════════════════════════════════ */
+
+/* Fire Alert Indicator Pulse */
+@keyframes enemy-fire-alert-pulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+.enemy-health-bar-fill {
+  transition:
+    width 0.12s ease-out,
+    background 0.2s ease;
+}
+
+@media (max-width: 480px) and (orientation: portrait) {
+  #kill-type-popup {
+    left: 14px;
+    /* Dynamically calculates space right below the HP Panel and above the Combo stack */
+    top: calc(14px + clamp(60px, 8vw, 68px) + 12px);
+    transform: translate(0, -50%);
+
+    /* Slightly tighter sizing for small vertical mobile stacking */
+    min-width: clamp(140px, 42vw, 220px);
+    padding: 8px 16px;
+    font-size: clamp(13px, 3.2vw, 16px);
+  }
+
+  /* Override original centered animations with left-aligned variants */
+  #kill-type-popup.show-kill {
+    animation: kill-popup-anim-portrait 1s ease-out forwards;
+  }
+
+  #kill-type-popup.show-collect {
+    font-size: clamp(11px, 2.4vw, 13px);
+    animation: kill-popup-anim-portrait 1.5s ease-out forwards;
+  }
+}
+
+/* Dedicated left-aligned animation track to prevent horizontal layout shifting */
+@keyframes kill-popup-anim-portrait {
+  0% {
+    opacity: 0;
+    transform: translate(0, -44%);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, -56%);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   IN-GAME HUD — LANDSCAPE MOBILE / TABLET RESPONSIVE
+   Targets heights ≤ 500px (phones/tabs in landscape).
+   Everything scales via vh so the 300px minimum is usable.
+   ══════════════════════════════════════════════════════ */
+@media (max-height: 500px) and (orientation: landscape) {
+
+  /* ── TOP-LEFT: HP Panel ─────────────────────────────── */
+  #hp-panel {
+    top: 6px;
+    left: 6px;
+    /* Width uses vw as normal; height switches to vh so it
+       doesn't overflow a 300px-tall screen. */
+    width: clamp(130px, 26vw, 220px);
+    height: clamp(36px, 10vh, 52px);
+  }
+
+  #hp-label {
+    font-size: clamp(7px, 2vh, 11px);
+  }
+
+  #hp-value {
+    font-size: clamp(9px, 2.5vh, 14px);
+  }
+
+  /* ── TOP-RIGHT: Score overlay ───────────────────────── */
+  #score-overlay {
+    top: 6px;
+    right: 6px;
+    width: clamp(110px, 20vw, 180px);
+    height: clamp(36px, 10vh, 52px);
+  }
+
+  #score-label {
+    font-size: clamp(7px, 2vh, 11px);
+  }
+
+  #score-value {
+    font-size: clamp(9px, 2.5vh, 14px);
+  }
+
+  /* ── TOP-RIGHT: Kill overlay ─────────────────────────── */
+  #kill-overlay {
+    /* Stack directly below score with tight gap */
+    top: calc(6px + clamp(36px, 10vh, 52px) + 4px);
+    right: 6px;
+    width: clamp(110px, 20vw, 180px);
+    height: clamp(34px, 9vh, 48px);
+  }
+
+  #kill-label {
+    font-size: clamp(7px, 2vh, 11px);
+  }
+
+  #kill-value {
+    font-size: clamp(9px, 2.5vh, 14px);
+  }
+
+  /* ── TOP-RIGHT: In-game settings button ─────────────── */
+  #settings-overlay-btn {
+    /* Move below kill overlay — still fits at 300px */
+    top: calc(6px + clamp(36px, 10vh, 52px) + 4px + clamp(34px, 9vh, 48px) + 4px);
+    right: 6px;
+  }
+
+  #settings-overlay-btn .btn-setting {
+    width: clamp(24px, 6vh, 34px);
+    height: clamp(24px, 6vh, 34px);
+  }
+
+  /* ── BOTTOM-RIGHT: Ammo ring ─────────────────────────── */
+  #ammo-panel {
+    bottom: 6px;
+    right: 6px;
+  }
+
+  #ammo-bg-img {
+    height: clamp(36px, 9vh, 52px);
+    width: 20px;
+  }
+
+  #ammo-ring-container {
+    width: clamp(56px, 15vh, 80px);
+    height: clamp(56px, 15vh, 80px);
+  }
+
+  #ammo-current {
+    font-size: clamp(12px, 3.5vh, 20px);
+  }
+
+  #ammo-sep {
+    font-size: clamp(7px, 2vh, 12px);
+    margin: 0 2px;
+  }
+
+  #ammo-max {
+    font-size: clamp(7px, 2vh, 12px);
+  }
+
+  /* ── BOTTOM-LEFT: Weapon switch button ───────────────── */
+  #weapon-switch-btn {
+    bottom: 6px;
+    left: 6px;
+  }
+
+  .wsb-guns-container {
+    width: clamp(70px, 16vw, 100px);
+    height: clamp(44px, 12vh, 60px);
+    transform: translateY(30%);
+  }
+
+  .wsb-hint {
+    display: none; /* Hide label hint — too cramped */
+  }
+
+  /* ── COMBO display ────────────────────────────────────── */
+  #combo-display {
+    /* Reposition so it sits just below HP panel, not mid-screen */
+    top: calc(6px + clamp(36px, 10vh, 52px) + 6px);
+    left: 6px;
+    gap: 3px;
+  }
+
+  .combo-popup-item {
+    min-width: clamp(80px, 18vw, 120px);
+    min-height: clamp(20px, 6vh, 30px);
+    padding: 3px 10px;
+    font-size: clamp(9px, 2.5vh, 13px);
+  }
+
+  /* ── Kill-type popup ──────────────────────────────────── */
+  #kill-type-popup {
+    top: 8%;
+    font-size: clamp(11px, 3vh, 16px);
+    min-width: clamp(120px, 26vw, 200px);
+    min-height: clamp(28px, 7vh, 40px);
+    padding: 5px 14px;
+  }
+
+  /* ── Crosshair — keep centered, no change needed ─────── */
+
+  /* ── Wave clear message ───────────────────────────────── */
+  #wave-clear-msg {
+    font-size: clamp(20px, 5vh, 30px);
+    top: 25%;
+  }
+
+  /* ── Advance button ───────────────────────────────────── */
+  #advance-btn {
+    bottom: clamp(8px, 3vh, 20px);
+  }
+
+  /* ── Sniper scope — shrink lens on tiny screens ──────── */
+  .scope-lens {
+    width: min(86vh, 86vw);
+    height: min(86vh, 86vw);
+  }
+}
+
+/* ── Extra-tight: very short landscape (≤ 380px height) ── */
+@media (max-height: 380px) and (orientation: landscape) {
+
+  #hp-panel {
+    top: 4px;
+    left: 4px;
+    width: clamp(110px, 22vw, 180px);
+    height: clamp(30px, 9vh, 42px);
+  }
+
+  #score-overlay {
+    top: 4px;
+    right: 4px;
+    width: clamp(95px, 17vw, 150px);
+    height: clamp(30px, 9vh, 42px);
+  }
+
+  #kill-overlay {
+    top: calc(4px + clamp(30px, 9vh, 42px) + 3px);
+    right: 4px;
+    width: clamp(95px, 17vw, 150px);
+    height: clamp(28px, 8vh, 38px);
+  }
+
+  #settings-overlay-btn {
+    top: calc(4px + clamp(30px, 9vh, 42px) + 3px + clamp(28px, 8vh, 38px) + 3px);
+    right: 4px;
+  }
+
+  #settings-overlay-btn .btn-setting {
+    width: clamp(20px, 5.5vh, 28px);
+    height: clamp(20px, 5.5vh, 28px);
+  }
+
+  #ammo-panel {
+    bottom: 4px;
+    right: 4px;
+  }
+
+  #ammo-bg-img {
+    height: clamp(28px, 8vh, 40px);
+    width: 16px;
+  }
+
+  #ammo-ring-container {
+    width: clamp(46px, 13vh, 64px);
+    height: clamp(46px, 13vh, 64px);
+  }
+
+  #ammo-current {
+    font-size: clamp(10px, 3vh, 16px);
+  }
+
+  #ammo-sep,
+  #ammo-max {
+    font-size: clamp(6px, 1.8vh, 10px);
+  }
+
+  #weapon-switch-btn {
+    bottom: 4px;
+    left: 4px;
+  }
+
+  .wsb-guns-container {
+    width: clamp(56px, 13vw, 80px);
+    height: clamp(36px, 10vh, 50px);
+    transform: translateY(25%);
+  }
+
+  #combo-display {
+    top: calc(4px + clamp(30px, 9vh, 42px) + 4px);
+    left: 4px;
+    gap: 2px;
+  }
+
+  .combo-popup-item {
+    min-width: clamp(70px, 15vw, 100px);
+    min-height: clamp(18px, 5vh, 26px);
+    padding: 2px 8px;
+    font-size: clamp(8px, 2.2vh, 11px);
+  }
+
+  #kill-type-popup {
+    font-size: clamp(10px, 2.8vh, 14px);
+    min-width: clamp(100px, 22vw, 160px);
+    min-height: clamp(22px, 6vh, 34px);
+    padding: 4px 10px;
+  }
+}

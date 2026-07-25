@@ -1,0 +1,204 @@
+/* ── Mobile Touch Controls ────────────────────────────────
+   Scope-in / Scope-out button + Fire button
+   Only visible on touch devices (navigator.maxTouchPoints > 0)
+   ───────────────────────────────────────────────────────── */
+#mobile-controls {
+  position: fixed;
+  inset: 0;
+  z-index: 201;
+  pointer-events: none;
+  display: none;
+}
+
+body.touch-device #mobile-controls,
+body:not(.pointer-locked) #mobile-controls {
+  display: block;
+}
+
+#left-controls-container {
+  position: fixed;
+  bottom: clamp(10px, 4vh, 30px);
+  left: clamp(10px, 2vw, 20px);
+  display: flex;
+  flex-direction: column; /* Weapon switch on bottom, scope above */
+  align-items: center;
+  gap: clamp(16px, 4vh, 32px);
+  z-index: 300; /* Above sniper scope overlay */
+  pointer-events: none;
+}
+
+#left-controls-container > * {
+  pointer-events: auto;
+}
+
+/* ── Scope-In / Scope-Out Button ──────────────────────── */
+#scope-btn {
+  position: relative;
+
+  /* Use vh so button stays compact in landscape (short height) */
+  width: clamp(44px, 10vh, 72px);
+  height: clamp(44px, 10vh, 72px);
+  bottom: clamp(100px, 2vh, 180px);
+  left: clamp(20px, 3vh, 30px);
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+  border: 2px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: all 0.15s ease;
+  z-index: 300; /* Must be above sniper scope overlay */
+}
+
+#scope-btn:active {
+  transform: scale(0.92);
+  background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1));
+}
+
+#scope-btn .scope-icon {
+  font-size: clamp(18px, 4vh, 28px);
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+#scope-btn .scope-label {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(9px, 1.8vw, 11px);
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  white-space: nowrap;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Scoped state */
+#scope-btn.scoped {
+  border-color: rgba(255, 140, 0, 0.6);
+  background: linear-gradient(135deg, rgba(255,140,0,0.2), rgba(255,100,0,0.1));
+  box-shadow: 0 0 20px rgba(255,140,0,0.2);
+}
+
+#scope-btn.scoped .scope-label {
+  color: #FF8C00;
+}
+
+/* ── Fire Button ──────────────────────────────────────── */
+#fire-btn {
+  position: fixed;
+  /*
+    Positioned left of the ammo ring, vertically centred in the
+    lower-right quadrant. Uses vh/vw so it auto-shrinks in landscape.
+  */
+  bottom: clamp(6px, 3vh, 24px);
+  right: clamp(80px, 18vw, 200px); /* Keep clear of ammo ring at right:6px */
+  /* vh-based so it shrinks in landscape (short screens) */
+  width: clamp(50px, 12vh, 84px);
+  height: clamp(50px, 12vh, 84px);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7a7a7a33, #ebebeb73);
+  border: 3px solid rgba(255,255,255,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: all 0.15s ease;
+  overflow: hidden;
+  z-index: 300; /* Above sniper scope overlay */
+  box-shadow:
+    0 4px 20px rgba(142, 142, 142, 0.3),
+    inset 0 2px 0 rgba(255,255,255,0.2);
+}
+
+#fire-btn:active {
+  transform: scale(0.88);
+  box-shadow:
+    0 2px 10px rgba(255,0,0,0.2),
+    inset 0 2px 0 rgba(255,255,255,0.1);
+}
+
+#fire-btn .fire-icon {
+  font-size: clamp(10px, 2.2vh, 15px);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'Poppins', sans-serif;
+}
+
+#fire-btn.visible {
+  display: flex;
+}
+
+/* ── Extra-tight landscape (≤ 500px height) ──────────── */
+@media (max-height: 500px) and (orientation: landscape) {
+  #left-controls-container {
+    /* Push scope btn slightly higher so it doesn't crowd weapon switch */
+    bottom: clamp(8px, 3vh, 20px);
+    left: clamp(8px, 1.5vw, 14px);
+    gap: clamp(10px, 3vh, 20px);
+  }
+
+  #scope-btn {
+    width: clamp(38px, 9.5vh, 60px);
+    height: clamp(38px, 9.5vh, 60px);
+    bottom: clamp(70px, 2vh, 130px);
+    left: clamp(14px, 2.5vh, 22px);
+  }
+
+  #scope-btn .scope-icon {
+    font-size: clamp(15px, 3.5vh, 22px);
+  }
+
+  /* Hide scope label on tiny landscape — overlaps weapon switch hint area */
+  #scope-btn .scope-label {
+    display: none;
+  }
+
+  #fire-btn {
+    bottom: clamp(4px, 2vh, 14px);
+    right: clamp(70px, 16vw, 170px);
+    width: clamp(44px, 11vh, 70px);
+    height: clamp(44px, 11vh, 70px);
+  }
+}
+
+/* ── Extra-extra-tight (≤ 380px height) ─────────────── */
+@media (max-height: 380px) and (orientation: landscape) {
+  #scope-btn {
+    width: clamp(32px, 8.5vh, 50px);
+    height: clamp(32px, 8.5vh, 50px);
+  }
+
+  #fire-btn {
+    width: clamp(36px, 10vh, 58px);
+    height: clamp(36px, 10vh, 58px);
+    right: clamp(60px, 14vw, 140px);
+  }
+}
+
+/* ── Hide mobile controls on desktop (non-touch) UNLESS pointer lock failed ── */
+@media (hover: hover) and (pointer: fine) {
+  #mobile-controls {
+    display: none !important;
+  }
+  body.pointer-lock-failed #mobile-controls {
+    display: block !important;
+  }
+}
