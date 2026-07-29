@@ -1,0 +1,685 @@
+/* ══════════════════════════════════════════════════════════════
+   STORE — Full-screen overlay
+   Layout (landscape / wide):  [tabs | items | 3D preview]
+   Layout (portrait / narrow): [tabs-top] [items-H-scroll] [preview-bottom]
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Overlay backdrop ── */
+#store-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  /* Lobby background shines through, darkened by a semi-transparent fade */
+  background: rgba(5, 5, 10, 0.82);
+  backdrop-filter: blur(3px);
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  touch-action: manipulation;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+}
+
+/* ── Header bar ── */
+#store-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(6px, 1.5vh, 14px) clamp(10px, 2vw, 24px);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: auto;
+}
+
+#store-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#store-header-title span {
+  font-size: clamp(18px, 4vmin, 32px);
+  letter-spacing: 3px;
+  color: #fff;
+  text-shadow:
+    0 0 20px rgba(255, 180, 50, 0.6),
+    0 2px 6px rgba(0, 0, 0, 0.8);
+  text-transform: uppercase;
+}
+
+#store-close-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: inherit;
+  font-size: clamp(10px, 2vmin, 14px);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: clamp(4px, 1vmin, 8px) clamp(8px, 1.8vmin, 16px);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.1s ease;
+}
+
+#store-close-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+#store-close-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Main body ── */
+#store-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════
+   SECTION 1 — CATEGORY TABS
+   ══════════════════════════════ */
+#store-tabs-panel {
+  position: relative;
+  flex-shrink: 0;
+  width: clamp(80px, 14vw, 160px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#store-tabs-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 18, 0.88);
+  z-index: 0;
+}
+
+/* ── Per-tab background images ── */
+.store-tab[data-category="guns"],
+.store-tab[data-category="powerups"] {
+  background-image: url("/assets/images/lobby/white-bg-small.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: transparent;
+}
+
+#store-tabs-list {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 1vmin, 10px);
+  padding: clamp(8px, 1.5vmin, 16px) clamp(6px, 1vmin, 12px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+#store-tabs-list::-webkit-scrollbar {
+  width: 2px;
+}
+#store-tabs-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.store-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: clamp(8px, 1.5vmin, 16px) clamp(6px, 1.2vmin, 14px);
+  aspect-ratio: 2.7 / 1;
+  cursor: pointer;
+  width: 100%;
+  transition:
+    transform 0.12s ease;
+  text-align: center;
+  user-select: none;
+  filter: grayscale(100%);
+  -webkit-user-select: none;
+  /* default bg for tabs that don't have an image yet */
+}
+
+.store-tab:hover {
+  filter: brightness(1.15);
+  border-color: rgba(255, 200, 80, 0.4);
+}
+
+.store-tab.active {
+  filter: saturate(2) brightness(1);
+}
+
+.store-tab:active {
+  transform: scale(0.96);
+}
+
+.store-tab-icon {
+  display: none;
+}
+
+.store-tab-label {
+  font-size: clamp(10px, 1.8vmin, 15px);
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: rgba(0, 0, 0, 0.681);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.store-tab.active .store-tab-label {
+  color: #630000;
+}
+
+/* ══════════════════════════════
+   SECTION 2 — ITEM LIST
+   ══════════════════════════════ */
+#store-items-panel {
+  position: relative;
+  flex-shrink: 0;
+  width: clamp(140px, 26vw, 300px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#store-items-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 9, 16, 0.92);
+  z-index: 0;
+  pointer-events: none;
+}
+
+#store-items-list {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 1vmin, 8px);
+  padding: clamp(8px, 1.5vmin, 14px) clamp(6px, 1vmin, 12px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+#store-items-list::-webkit-scrollbar {
+  width: 3px;
+}
+#store-items-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+#store-items-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 200, 80, 0.3);
+  border-radius: 2px;
+}
+
+.store-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(6px, 1.2vmin, 12px);
+  aspect-ratio: 2.5 / 1;
+  overflow: hidden;
+  background-image: url("/assets/images/lobby/metal-bg.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: pan-x pan-y;
+  z-index: 5;
+  transition:
+    transform 0.12s ease;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  filter: grayscale(50%);
+  position: relative;
+}
+
+.store-list-item:hover {
+}
+
+.store-list-item.selected {
+  filter: saturate(2) brightness(1);
+}
+
+.store-list-item:active {
+  transform: scale(0.97);
+}
+
+.store-list-item-icon-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.store-list-icon {
+  /* width: 55%; */
+  /* height: 85%; */
+  object-fit: cover;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+.store-item-count {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: clamp(9px, 1.4vmin, 12px);
+  font-weight: 800;
+  color: #ffd84a;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 200, 80, 0.4);
+}
+
+.store-list-item-info,
+.store-list-item-arrow {
+  display: none !important;
+}
+
+.store-list-item-name {
+  font-size: clamp(9px, 1.8vmin, 15px);
+  letter-spacing: 0.5px;
+  color: #fff;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.store-list-item-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: clamp(8px, 1.5vmin, 12px);
+  color: #ffd84a;
+}
+
+.store-list-price-icon {
+  width: clamp(10px, 1.8vmin, 16px);
+  height: clamp(10px, 1.8vmin, 16px);
+  object-fit: contain;
+  flex-shrink: 0;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+.store-list-item-arrow {
+  flex-shrink: 0;
+  font-size: clamp(14px, 2.5vmin, 22px);
+  color: rgba(255, 255, 255, 0.3);
+  transition: color 0.15s ease;
+}
+
+.store-list-item.selected .store-list-item-arrow,
+.store-list-item:hover .store-list-item-arrow {
+  color: rgba(255, 190, 40, 0.7);
+}
+
+/* ══════════════════════════════
+   SECTION 3 — 3D PREVIEW
+   ══════════════════════════════ */
+#store-preview-panel {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 12, 20, 0.95) 0%,
+    rgba(20, 22, 35, 0.9) 100%
+  );
+}
+
+#store-preview-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(6px, 1.2vmin, 14px);
+  padding: clamp(10px, 2vmin, 20px) clamp(10px, 2vmin, 20px);
+  overflow: hidden;
+}
+
+#store-preview-label-wrap {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+#store-preview-name {
+  display: block;
+  font-size: clamp(14px, 3vmin, 26px);
+  letter-spacing: 2px;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 0 0 14px rgba(255, 190, 40, 0.5);
+}
+
+#store-preview-subtitle {
+  display: block;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(9px, 1.6vmin, 13px);
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* 3D canvas wrapper */
+#store-3d-wrap {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 190, 40, 0.06) 0%,
+    rgba(5, 5, 15, 0) 70%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#store-3d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+#store-3d-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(9px, 1.4vmin, 12px);
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Price & buy area */
+#store-preview-buy-area {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vmin, 20px);
+  width: 100%;
+  max-width: 500px;
+}
+
+#store-preview-price {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+#store-preview-price-icon {
+  width: clamp(18px, 3.5vmin, 32px);
+  height: clamp(18px, 3.5vmin, 32px);
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+#store-preview-price-val {
+  font-size: clamp(14px, 3vmin, 26px);
+  color: #ffd84a;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(255, 200, 60, 0.4);
+}
+
+#store-preview-buy-btn {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  min-width: clamp(80px, 18vmin, 160px);
+  height: clamp(30px, 6.5vmin, 52px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease,
+    opacity 0.2s ease;
+}
+
+#store-preview-buy-btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+#store-preview-buy-btn:hover {
+  transform: scale(1.06);
+  filter: brightness(1.12);
+}
+
+#store-preview-buy-btn:active {
+  transform: scale(0.96);
+}
+
+#store-preview-buy-btn .store-buy-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  z-index: 0;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+#store-preview-buy-btn .store-buy-text {
+  position: relative;
+  z-index: 1;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(11px, 2.2vmin, 18px);
+  color: #1a1a1a;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Owned / max-limit states */
+#store-preview-buy-btn.owned,
+#store-preview-buy-btn.max-limit {
+  opacity: 0.65;
+  pointer-events: none;
+  filter: grayscale(0.6);
+}
+
+/* ══════════════════════════════
+   Legacy hidden items (JS compat)
+   ══════════════════════════════ */
+#store-legacy-items {
+  display: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — PORTRAIT / NARROW (≤ 600px wide)
+   Layout switches to: [tabs-horizontal] / [items-H-scroll] / [preview]
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  #store-body {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  /* Section 1: Tabs go horizontal at top */
+  #store-tabs-panel {
+    width: 100%;
+    height: auto;
+    flex-shrink: 0;
+  }
+
+  #store-tabs-list {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    touch-action: pan-x;
+    height: clamp(38px, 8vh, 58px);
+    padding: 4px clamp(8px, 1.5vw, 14px);
+    gap: clamp(6px, 1.5vw, 12px);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #store-tabs-list::-webkit-scrollbar {
+    height: 2px;
+  }
+
+  .store-tab {
+    flex-direction: row;
+    height: 100%;
+    width: auto;
+    aspect-ratio: 2.7 / 1;
+    min-width: unset;
+    flex-shrink: 0;
+    flex-grow: 0;
+    touch-action: pan-x;
+    padding: clamp(4px, 1vh, 8px) clamp(8px, 1.5vw, 14px);
+  }
+
+  .store-tab-label {
+    font-size: clamp(8px, 1.8vh, 13px);
+  }
+
+  /* Section 2: Item list goes horizontal scroll */
+  #store-items-panel {
+    width: 100%;
+    height: auto;
+    flex-shrink: 0;
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  #store-items-list {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    touch-action: pan-x;
+    height: clamp(55px, 11vh, 80px);
+    padding: 6px clamp(8px, 1.5vw, 12px);
+    gap: clamp(8px, 1.5vw, 12px);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #store-items-list::-webkit-scrollbar {
+    height: 2px;
+  }
+
+  .store-list-item {
+    height: 100%;
+    width: auto;
+    aspect-ratio: 2.5 / 1;
+    min-width: unset;
+    flex-shrink: 0;
+    flex-grow: 0;
+  }
+
+  .store-list-item-info {
+    align-items: center;
+  }
+
+  .store-list-item-arrow {
+    display: none;
+  }
+
+  /* Section 3: Preview takes remaining space */
+  #store-preview-panel {
+    flex: 1 1 200px;
+    min-height: 200px;
+  }
+
+  #store-preview-inner {
+    padding: clamp(8px, 1.5vw, 14px);
+  }
+
+  #store-3d-wrap {
+    max-width: 100%;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Very small screens (≤ 400px)
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 400px) {
+  #store-header-title span {
+    font-size: 16px;
+  }
+  #store-close-btn {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+  #store-preview-name {
+    font-size: 13px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Legacy .store-item classes (still used by updateBuyButtons in
+   store.js to track owned / max-limit state via data-item)
+   ══════════════════════════════════════════════════════════════ */
+.store-item {
+  pointer-events: none;
+}
+.store-buy-btn {
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Store row classes (kept for backward compat, but unused in new UI)
+   ══════════════════════════════════════════════════════════════ */
+.store-row {
+  display: none;
+}

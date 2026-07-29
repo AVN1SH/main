@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- <meta http-equiv="Content-Security-Policy"
+    content="default-src 'none'; script-src 'report-sample' 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdn.tailwindcss.com https://www.youtube.com/game_api/v0 https://www.youtube.com/game_api/v0/ https://www.youtube.com/game_api/v1 https://www.youtube.com/game_api/v1/; object-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com; connect-src 'self' blob: data:; sandbox allow-pointer-lock allow-same-origin allow-scripts; base-uri 'self'; manifest-src 'self'; worker-src 'self' blob:"> -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f1923">
+  <meta name="description" content="FPS Street Shooter — A cover-based first-person shooter built with Three.js.">
+  <title>Street Shooter</title>
+
+  <!-- Luckiest Guy from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Baloo+2:wght@700&family=Poppins:wght@400;900&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --font-display: 'Luckiest Guy', 'Baloo 2', 'Impact', 'Arial Black', sans-serif;
+      --font-ui: 'Helvetica Neue', Arial, sans-serif;
+    }
+  </style>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="lobby.css">
+  <link rel="stylesheet" href="tutorial.css">
+  <link rel="stylesheet" href="mobile-controls.css">
+  <link rel="stylesheet" href="rewarded-ad.css">
+  <link rel="stylesheet" href="store.css">
+  <link rel="stylesheet" href="cash-animation.css">
+  <link rel="stylesheet" href="weapon-select.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+
+  <!-- YouTube Playables SDK (must be after importmap) -->
+  <script src="https://www.youtube.com/game_api/v1"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/libs/three.module.js",
+      "three/addons/": "/libs/three/examples/jsm/",
+      "@dimforge/rapier3d-compat": "/libs/rapier.es.js",
+      "gsap": "/libs/gsap.js"
+    }
+  }
+  </script>
+</head>
+
+<body>
+
+  <!-- ══════════════════════════════════════════
+       MOCK LOADER — appears immediately before any JS runs
+       Uses CSS and markup from loader.html
+  ══════════════════════════════════════════ -->
+  <style>
+    @keyframes mock-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes mock-fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #mock-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: #0a0a1a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease;
+      opacity: 1;
+      pointer-events: auto;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    #mock-loader.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #mock-loader .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 26px;
+      animation: mock-fadeUp 1s ease;
+    }
+
+    #mock-loader .brand-logo {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      margin-bottom: 10px;
+      filter: drop-shadow(0 0 12px rgba(255, 140, 0, 0.4));
+    }
+
+    #mock-loader .brand-title {
+      color: #fff;
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin: 0;
+    }
+
+    #mock-loader .game-title {
+      color: #fff;
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      margin: 0 0 6px;
+    }
+
+    #mock-loader .game-subtitle {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.85rem;
+      margin: 0;
+    }
+
+    #mock-loader .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid #a78bfa;
+      border-radius: 50%;
+      animation: mock-spin 0.8s linear infinite;
+      margin: 24px 0;
+    }
+
+    #mock-loader .progress-track {
+      width: 200px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    #mock-loader .progress-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #7c3aed, #a78bfa);
+      border-radius: 99px;
+      transform-origin: left;
+      transition: transform 0.05s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      transform: scaleX(0);
+    }
+
+    #mock-loader .progress-text {
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 0.75rem;
+      margin-top: 10px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+  <div id="mock-loader">
+    <div class="branding">
+      <div class="brand-logo"
+        style="background-image:url('/assets/images/logo.png');background-size:contain;background-repeat:no-repeat;background-position:center;width:80px;height:80px;">
+      </div>
+      <div class="brand-title">Cloudz Fun</div>
+    </div>
+    <div class="game-title">Street Shooter</div>
+    <div class="game-subtitle">Get Ready...</div>
+    <div class="spinner"></div>
+    <div class="progress-track">
+      <div class="progress-fill" id="mock-progress-fill"></div>
+    </div>
+    <div class="progress-text" id="mock-progress-text">0%</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       HUD OVERLAY — sits above the canvas (z-index: 10)
+  ══════════════════════════════════════════ -->
+  <div id="hud" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:100;pointer-events:none;">
+
+    <!-- TOP-LEFT: HP Bar panel -->
+    <div id="hp-panel">
+      <img src="/assets/images/overlays/health.webp" class="overlay-img" alt="Health Background">
+      <img src="/assets/images/overlays/healthbar.webp" class="overlay-img" id="hp-bar-fill" alt="Health Bar Fill">
+      <span id="hp-label" class="hud-label">HEALTH</span>
+      <span id="hp-value">100</span>
+    </div>
+    <!-- TOP-CENTER: hidden wave text (kept for JS compat, not shown) -->
+    <div id="wave-display" style="display:none">
+      <div id="wave-icon"></div>
+      <div id="wave-text">WAVE 1</div>
+    </div>
+
+    <!-- TOP-RIGHT: Score overlay (uses score.webp background) -->
+    <div id="score-overlay">
+      <img src="/assets/images/overlays/score.webp" class="overlay-img" alt="Score">
+      <span id="score-label" class="hud-label">SCORE</span>
+      <span id="score-value">0</span>
+    </div>
+
+    <!-- TOP-RIGHT below score: Kill count overlay (uses kill.webp background) -->
+    <div id="kill-overlay">
+      <img src="/assets/images/overlays/kill.webp" class="overlay-img" alt="Kills">
+      <span id="kill-label" class="hud-label">KILLS</span>
+      <span id="kill-value">0</span>
+    </div>
+
+    <!-- TOP-RIGHT: In-game Settings button -->
+    <div id="settings-overlay-btn">
+      <button id="in-game-setting-btn" class="btn-setting"></button>
+    </div>
+
+    <!-- BOTTOM-RIGHT: Ammo overlay -->
+    <div id="ammo-panel">
+      <img src="/assets/images/overlays/riffle-bullet.webp" id="ammo-bg-img" alt="Ammo">
+
+      <div id="ammo-ring-container">
+        <svg id="ammo-ring-svg" viewBox="0 0 100 100">
+          <circle id="ammo-ring-bg" cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.15)"
+            stroke-width="8" />
+          <circle id="ammo-ring-fill" cx="50" cy="50" r="40" fill="none" stroke="#FF8C00" stroke-width="8"
+            stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="0" transform="rotate(-90 50 50)" />
+        </svg>
+        <div id="ammo-center">
+          <span id="ammo-current">30</span>
+          <span id="ammo-sep">/</span>
+          <span id="ammo-max">30</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM-LEFT: Weapon Switch Button is now moved inside mobile-controls wrapper below -->
+
+    <!-- KILL TYPE POPUP: appears 1s on headshot or bodyshot -->
+    <div id="kill-type-popup"></div>
+
+    <!-- COMBO -->
+    <div id="combo-display"></div>
+
+    <!-- CROSSHAIR -->
+    <div id="crosshair">
+      <div class="ch-top"></div>
+      <div class="ch-bottom"></div>
+      <div class="ch-left"></div>
+      <div class="ch-right"></div>
+      <div class="ch-dot"></div>
+    </div>
+
+    <!-- HIT MARKER -->
+    <div id="hit-marker">
+      <div class="hm-tl"></div>
+      <div class="hm-tr"></div>
+      <div class="hm-bl"></div>
+      <div class="hm-br"></div>
+    </div>
+
+    <!-- HIT VIGNETTE -->
+    <div id="hit-vignette"></div>
+
+    <!-- ══════════════════════════════
+         LOBBY SCREEN
+    ══════════════════════════════ -->
+    <div id="lobby-container" style="display:none;pointer-events:auto;">
+
+      <!-- Top Row: Profile & Currency -->
+      <div class="lobby-header">
+        <div class="profile-card">
+          <img src="/assets/images/lobby/player-avatar.webp" class="profile-avatar" alt="Player">
+          <div class="profile-info">
+            <div class="profile-name-row">
+              <div class="profile-name" id="profile-name-text">PLAYER123</div>
+              <button id="profile-edit-btn" type="button" class="profile-edit-btn"
+                aria-label="Edit player name">✎</button>
+            </div>
+            <div class="profile-level-wrap">
+              <!-- <span class="level-badge">12</span> -->
+              <!-- <div class="xp-bar-track">
+                <div class="xp-bar-fill"></div>
+              </div> -->
+              <div id="welcome-back-text">Welcome Back</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="currency-wrap">
+          <div class="currency-item">
+            <img src="/assets/images/lobby/cash.webp" class="currency-icon" alt="Cash">
+            <span class="currency-val" id="currency-cash">100</span>
+            <div class="btn-plus" id="btn-add-cash" aria-label="Watch Ad for Cash" title="Watch Ad for Cash">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#000">
+                <path
+                  d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+              </svg>
+            </div>
+          </div>
+          <button id="lobby-store-btn" class="btn-store" aria-label="Store">
+            <img src="/assets/images/lobby/store.webp" class="store-icon" alt="Store">
+          </button>
+        </div>
+      </div>
+
+      <!-- Center: character and logo -->
+      <div class="lobby-center">
+        <img src="/assets/images/lobby/player.webp" class="character-img" alt="Character">
+        <img src="/assets/images/lobby/logo-small.webp" class="center-logo" alt="Street Shooter">
+      </div>
+
+      <!-- Left Side: Stats -->
+      <div class="lobby-left">
+        <!-- Highscore Card -->
+        <div class="relative stat-card">
+          <img src="/assets/images/lobby/trophy.webp" class="stat-icon-large" alt="Trophy">
+          <div class="stat-content">
+            <span class="stat-title absolute top-[20px]" id="label-highscore">HIGHSCORE</span>
+            <div class="relative w-[130px]  top-[8px]">
+              <img src="/assets/images/lobby/dark-inner-bg.webp"
+                class="w-full h-full object-cover object-center aspect-[2.8/1]" alt="">
+              <div class="absolute inset-0 flex items-center justify-center stat-value-box" id="lobby-high-score">0
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Max Kills Card -->
+        <div class="relative stat-card">
+          <img src="/assets/images/lobby/skull.webp" class="stat-icon-large" alt="Skull">
+          <div class="stat-content">
+            <span class="stat-title absolute top-[20px]" id="label-max-kills">MAX KILLS</span>
+            <div class="relative w-[130px] top-[8px]">
+              <img src="/assets/images/lobby/dark-inner-bg.webp"
+                class="w-full h-full object-cover object-center aspect-[2.8/1]" alt="">
+              <div class="absolute inset-0 flex items-center justify-center stat-value-box" id="lobby-max-kills">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom: Start & Settings -->
+      <div class="lobby-bottom">
+        <div class="settings-btn-wrap">
+          <button id="lobby-setting-btn" class="btn-setting"></button>
+        </div>
+        <div class="btn-start-wrap">
+          <button id="lobby-start-btn" class="btn-start">
+            <span id="start-btn-text">START</span>
+          </button>
+          <div class="start-ribbon -translate-y-2">
+            <svg viewBox="0 0 340 40" class="ribbon-svg">
+              <path id="ribbonCurve" d="M 10 21 Q 170 0 330 21" fill="transparent" />
+              <text>
+                <textPath href="#ribbonCurve" startOffset="50%" text-anchor="middle" id="ribbon-text">
+                  SURVIVE THE STREET! STAND AS LONG AS YOU CAN!
+                </textPath>
+              </text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════
+         LOADING SCREEN
+    ══════════════════════════════ -->
+    <div id="loading-screen" style="pointer-events:auto;">
+
+      <!-- Full-bleed poster background -->
+      <div id="ls-poster"></div>
+
+      <!-- Dark gradient overlay so text/UI pops -->
+      <div id="ls-overlay"></div>
+
+      <!-- ── Logo ── -->
+      <img id="ls-logo" src="/assets/images/logo.webp" alt="Street Shooter">
+
+      <!-- ── Decorative boards (bottom-left) ── -->
+      <div id="ls-boards">
+        <div class="ls-board">
+          <img src="/assets/images/health-board.webp" alt="Health is your life">
+        </div>
+        <div class="ls-board">
+          <img src="/assets/images/aim-well-board.webp" alt="Aim well, shoot fast">
+        </div>
+        <div class="ls-board">
+          <img src="/assets/images/use-cover-board.webp" alt="Use cover, stay safe">
+        </div>
+      </div>
+
+      <!-- ── Loading section (bottom-centre) ── -->
+      <div id="ls-bottom">
+        <div id="loading-text">LOADING...</div>
+
+        <!-- Progress bar -->
+        <div id="ls-bar-track">
+          <div id="loading-progress">
+            <div id="ls-bar-shine"></div>
+          </div>
+        </div>
+
+        <!-- Tip row -->
+        <div id="ls-tip">
+          <span class="ls-tip-label" id="ls-tip-label">TIP:</span>
+          <span id="ls-tip-text">KEEP MOVING AND USE COVER TO STAY ALIVE!</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════
+         GAME OVER POPUP
+    ══════════════════════════════ -->
+    <!-- Save loading overlay (shown during endGame() saves before game-over modal) -->
+    <div id="go-loading" style="display:none">
+      <div id="go-loading-bg"></div>
+      <img src="/assets/images/logo.webp" id="go-loading-logo" alt="">
+    </div>
+
+    <div id="game-over-screen" style="display:none">
+      <div id="go-title-wrap">
+        <img src="/assets/images/overlays/game-over.webp" id="go-title-img" alt="GAME OVER">
+      </div>
+      <div id="go-popup">
+        <!-- White background panel -->
+        <img src="/assets/images/overlays/square-white-bg.webp" id="go-bg-img" alt="">
+
+        <!-- Game Over title image -->
+
+        <!-- Reason for game over -->
+        <div id="go-reason">
+          <img src="/assets/images/lobby/skull.webp" class="go-reason-icon" alt="" id="go-reason-icon">
+          <span id="go-reason-text">YOU DIED!</span>
+        </div>
+
+        <!-- Score section with avatar and trophy icons -->
+        <div id="go-score-section">
+          <div class="flex items-center flex-col">
+            <img src="/assets/images/lobby/player-avatar.webp" class="go-score-icon" alt="">
+            <img src="/assets/images/lobby/trophy.webp" class="go-score-icon" alt="">
+          </div>
+          <div id="go-score-inner">
+            <div id="go-score-area">
+              <div id="go-score-label">SCORE</div>
+              <div id="go-score-val">0</div>
+            </div>
+            <div id="go-cash-reward">
+              <div id="go-cash-label">CASH REWARD</div>
+              <div id="go-cash-val"><img src="/assets/images/lobby/cash.webp" class="go-cash-icon" alt=""> +0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gun stats section -->
+        <div id="go-gun-stats">
+          <div class="go-gun-stat" id="go-rifle-stat">
+            <img src="/assets/images/overlays/ak47.webp" class="go-gun-img" alt="AK47">
+            <div class="go-gun-info">
+              <span class="go-gun-name" id="go-rifle-name">AK47</span>
+              <span class="go-gun-kills">
+                <img src="/assets/images/lobby/skull.webp" class="go-mini-icon" alt="">
+                <span id="go-rifle-kills">0</span>
+              </span>
+            </div>
+          </div>
+          <div class="go-gun-stat" id="go-sniper-stat">
+            <img src="/assets/images/overlays/awm.webp" class="go-gun-img" alt="AWM">
+            <div class="go-gun-info">
+              <span class="go-gun-name" id="go-sniper-name">AWM</span>
+              <span class="go-gun-kills">
+                <img src="/assets/images/lobby/skull.webp" class="go-mini-icon" alt="">
+                <span id="go-sniper-kills">0</span>
+              </span>
+            </div>
+          </div>
+          <div class="go-gun-stat" id="go-grenade-stat">
+            <img src="/assets/images/overlays/grenade.webp" class="go-gun-img" alt="Grenade">
+            <div class="go-gun-info">
+              <span class="go-gun-name" id="go-grenade-name">GRENADE</span>
+              <span class="go-gun-kills">
+                <img src="/assets/images/lobby/skull.webp" class="go-mini-icon" alt="">
+                <span id="go-grenade-kills">0</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Go to Lobby button with yellow bg image -->
+        <button id="go-lobby-btn">
+          <img src="/assets/images/lobby/start-yellow-bg.webp" alt="" class="go-btn-bg">
+          <span class="go-btn-text" id="go-lobby-text">GO TO LOBBY</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         REWARDED AD POPUP (shown after health death)
+    ══════════════════════════════ -->
+    <div id="rewarded-ad-screen" style="display:none">
+      <div id="ra-popup">
+        <div id="ra-title">CONTINUE?</div>
+
+
+        <div id="ra-message">Watch an ad to restore health and continue playing!</div>
+        <img src="/assets/images/overlays/square-white-bg.webp" id="ra-bg-img" alt="">
+
+        <div id="ra-icon-wrap">
+          <img src="/assets/images/overlays/health.webp" id="ra-icon" alt="">
+        </div>
+
+        <div id="ra-hp-display">
+          <!-- <img src="/assets/images/overlays/health.webp" id="ra-hp-icon" alt=""> -->
+          <span id="ra-hp-text">+100 HP</span>
+        </div>
+
+        <div id="ra-buttons">
+          <button id="ra-watch-btn">
+            <img src="/assets/images/lobby/start-yellow-bg.webp" alt="" class="ra-btn-bg">
+            <span class="ra-btn-text">WATCH AD</span>
+          </button>
+          <button id="ra-no-thanks-btn">
+            NO THANKS
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         SETTINGS POPUP (Lobby)
+    ══════════════════════════════ -->
+    <div id="settings-screen" style="display:none">
+      <div id="settings-popup">
+        <!-- White background panel (same as game over) -->
+        <img src="/assets/images/overlays/square-white-bg.webp" id="settings-bg-img" alt="">
+
+        <!-- ── Settings Title ── -->
+        <div id="settings-title-wrap">
+          <span class="settings-title-text" id="settings-title-text">SETTINGS</span>
+        </div>
+
+        <!-- ── Control Mode (mobile touch only) ── -->
+        <div class="settings-row" id="settings-control-mode-row">
+          <span class="settings-label" id="label-controls">CONTROLS</span>
+          <div class="ctrl-mode-options">
+            <label class="ctrl-mode-option" for="ctrl-radio-classic">
+              <input type="radio" name="ctrl-mode" id="ctrl-radio-classic" value="classic" checked>
+              <span class="ctrl-mode-radio-dot"></span>
+              <span class="ctrl-mode-name" id="ctrl-mode-name-classic">Classic</span>
+            </label>
+            <label class="ctrl-mode-option" for="ctrl-radio-joystick">
+              <input type="radio" name="ctrl-mode" id="ctrl-radio-joystick" value="joystick">
+              <span class="ctrl-mode-radio-dot"></span>
+              <span class="ctrl-mode-name" id="ctrl-mode-name-joystick">Hold-Fire</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ── Sensitivity ── -->
+        <div class="settings-row" id="settings-sensitivity-row">
+          <span class="settings-label" id="label-sensitivity">SENSITIVITY</span>
+          <div class="settings-slider-wrap">
+            <div class="settings-slider-track" id="sensitivity-track">
+              <div class="settings-slider-fill" id="sensitivity-fill"></div>
+              <div class="settings-slider-thumb" id="sensitivity-thumb"></div>
+            </div>
+            <span class="settings-slider-value" id="sensitivity-value">50%</span>
+          </div>
+        </div>
+
+        <!-- ── Music ── -->
+        <div class="settings-row" id="settings-music-row">
+          <span class="settings-label" id="label-music">MUSIC</span>
+          <div class="settings-toggle-wrap">
+            <button class="settings-toggle" id="music-toggle" data-on="true">
+              <span class="toggle-track">
+                <span class="toggle-knob"></span>
+              </span>
+              <span class="toggle-label">ON</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── SFX ── -->
+        <div class="settings-row" id="settings-sfx-row">
+          <span class="settings-label" id="label-sfx">SFX</span>
+          <div class="settings-toggle-wrap">
+            <button class="settings-toggle" id="sfx-toggle" data-on="true">
+              <span class="toggle-track">
+                <span class="toggle-knob"></span>
+              </span>
+              <span class="toggle-label">ON</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Language ── -->
+        <div class="settings-row" id="settings-language-row">
+          <span class="settings-label" id="label-language">LANGUAGE</span>
+          <div class="settings-select-wrap">
+            <select id="language-select" class="settings-select">
+              <option value="en">English</option>
+              <option value="hi">हिंदी</option>
+              <option value="es">Español</option>
+              <option value="zh-hans">简体中文</option>
+              <option value="zh-hant">繁體中文</option>
+              <option value="ar">العربية</option>
+              <option value="pt">Português</option>
+              <option value="fr">Français</option>
+              <option value="ru">Русский</option>
+              <option value="id">Bahasa Indonesia</option>
+              <option value="de">Deutsch</option>
+              <option value="ja">日本語</option>
+              <option value="tr">Türkçe</option>
+              <option value="vi">Tiếng Việt</option>
+              <option value="ko">한국어</option>
+              <option value="uk">Українська</option>
+              <option value="ms">Bahasa Melayu</option>
+              <option value="it">Italiano</option>
+              <option value="nl">Nederlands</option>
+              <option value="ro">Română</option>
+              <option value="th">ภาษาไทย</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Close button -->
+        <button id="settings-close-btn">
+          <img src="/assets/images/lobby/start-yellow-bg.webp" alt="" class="go-btn-bg">
+          <span class="go-btn-text" id="close-btn-text">CLOSE</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="player-name-screen" style="display:none">
+      <div id="player-name-popup">
+        <img src="/assets/images/overlays/square-white-bg.webp" id="player-name-bg-img" alt="">
+
+        <div id="player-name-title-wrap">
+          <span class="settings-title-text" id="player-name-title-text">PLAYER NAME</span>
+        </div>
+
+        <div class="player-row" id="player-name-row">
+          <span class="settings-label" id="label-enter-name">ENTER NAME</span>
+          <div class="name-input-wrap">
+            <!-- <img id="player-name-img" src="/assets/images/lobby/dark-inner-bg.webp" class="name-input-icon" alt=""> -->
+            <input id="player-name-input" type="text" maxlength="10" placeholder="Type name" autocomplete="name" />
+          </div>
+        </div>
+
+        <div class="">
+          <button id="player-name-save-btn" class="settings-close-btn">
+            <img src="/assets/images/lobby/start-yellow-bg.webp" alt="" class="go-btn-bg">
+            <span class="go-btn-text" id="player-name-save-text">SAVE</span>
+          </button>
+          <button id="player-name-close-btn" class="settings-close-btn">
+            <img src="/assets/images/lobby/start-yellow-bg.webp" alt="" class="go-btn-bg">
+            <span class="go-btn-text" id="player-name-close-text">CLOSE</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         STORE FULL-SCREEN (Lobby)
+    ══════════════════════════════ -->
+    <div id="store-screen" style="display:none">
+
+      <!-- ── Header bar ── -->
+      <div id="store-header">
+        <div id="store-header-title">
+          <span id="store-title-text">STORE</span>
+        </div>
+        <button id="store-close-btn" aria-label="Close Store">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+          <span id="store-close-text">CLOSE</span>
+        </button>
+      </div>
+
+      <!-- ── Main body: sidebar tabs | item list | preview ── -->
+      <div id="store-body">
+
+        <!-- SECTION 1: Category tabs (vertical in landscape, horizontal on mobile) -->
+        <div id="store-tabs-panel">
+          <div id="store-tabs-bg"></div>
+          <div id="store-tabs-list">
+            <button class="store-tab active" data-category="guns" id="store-tab-guns">
+              <span class="store-tab-label" id="store-tab-guns-label">GUNS</span>
+            </button>
+            <button class="store-tab" data-category="powerups" id="store-tab-powerups">
+              <span class="store-tab-label" id="store-tab-powerups-label">POWER-UPS</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Item list (vertical scroll in landscape, horizontal on mobile) -->
+        <div id="store-items-panel">
+          <div id="store-items-bg"></div>
+          <div id="store-items-list">
+
+            <!-- GUNS items -->
+            <div class="store-list-item" data-item="rifle" data-category="guns"
+              data-glb="/assets/guns/player_rifle.glb" data-price="0" data-name="AK47">
+              <div class="store-list-item-icon-wrap">
+                <img src="/assets/images/overlays/ak47.webp" class="store-list-icon" alt="AK47" style="aspect-ratio: 2/1; width: 60%;">
+              </div>
+              <div class="store-list-item-info">
+                <span class="store-list-item-name">AK47</span>
+                <span class="store-list-item-price">
+                  <img src="/assets/images/lobby/cash.webp" class="store-list-price-icon" alt="">
+                  <span>0</span>
+                </span>
+              </div>
+              <div class="store-list-item-arrow">›</div>
+            </div>
+
+            <div class="store-list-item" data-item="sniper" data-category="guns"
+              data-glb="/assets/guns/player_sniper.glb" data-price="0" data-name="SNIPER">
+              <div class="store-list-item-icon-wrap">
+                <img src="/assets/images/overlays/awm.webp" class="store-list-icon" alt="Sniper" style="aspect-ratio: 2/1; width: 60%;">
+              </div>
+              <div class="store-list-item-info">
+                <span class="store-list-item-name">SNIPER</span>
+                <span class="store-list-item-price">
+                  <img src="/assets/images/lobby/cash.webp" class="store-list-price-icon" alt="">
+                  <span>0</span>
+                </span>
+              </div>
+              <div class="store-list-item-arrow">›</div>
+            </div>
+
+            <div class="store-list-item" data-item="mac10" data-category="guns" data-glb="/assets/guns/player_mac10.glb"
+              data-price="4000" data-name="MAC10">
+              <div class="store-list-item-icon-wrap">
+                <img src="/assets/images/mac10.webp" class="store-list-icon" alt="MAC10" style="aspect-ratio: 1/1; width: 45%;">
+              </div>
+              <div class="store-list-item-info">
+                <span class="store-list-item-name">MAC10</span>
+                <span class="store-list-item-price">
+                  <img src="/assets/images/lobby/cash.webp" class="store-list-price-icon" alt="">
+                  <span>4,000</span>
+                </span>
+              </div>
+              <div class="store-list-item-arrow">›</div>
+            </div>
+
+            <div class="store-list-item" data-item="shotgun" data-category="guns"
+              data-glb="/assets/guns/player_shotgun.glb" data-price="5000" data-name="SHOTGUN">
+              <div class="store-list-item-icon-wrap">
+                <img src="/assets/images/shotgun.webp" class="store-list-icon" alt="Shotgun" style="aspect-ratio: 2/1; width: 60%;">
+              </div>
+              <div class="store-list-item-info">
+                <span class="store-list-item-name">SHOTGUN</span>
+                <span class="store-list-item-price">
+                  <img src="/assets/images/lobby/cash.webp" class="store-list-price-icon" alt="">
+                  <span>5,000</span>
+                </span>
+              </div>
+              <div class="store-list-item-arrow">›</div>
+            </div>
+
+            <div class="store-list-item" data-item="rocketlauncher" data-category="guns"
+              data-glb="/assets/guns/player_rocket.glb" data-price="12000" data-name="ROCKET LAUNCHER">
+              <div class="store-list-item-icon-wrap">
+                <img src="/assets/images/rpg.webp" class="store-list-icon" alt="Rocket Launcher" style="aspect-ratio: 2/1; width: 60%;">
+              </div>
+              <div class="store-list-item-info">
+                <span class="store-list-item-name">ROCKET LAUNCHER</span>
+                <span class="store-list-item-price">
+                  <img src="/assets/images/lobby/cash.webp" class="store-list-price-icon" alt="">
+                  <span>12,000</span>
+                </span>
+              </div>
+              <div class="store-list-item-arrow">›</div>
+            </div>
+
+            <!-- POWERUPS items (hidden initially) -->
+            <div class="store-list-item" data-item="grenade" data-category="powerups"
+              data-glb="/assets/guns/grenade.glb" data-price="2500" data-name="GRENADE" style="display:none">
+              <div class="store-list-item-icon-wrap">
+                <img src="/assets/images/overlays/grenade.webp" class="store-list-icon" alt="Grenade" style="aspect-ratio: 1/1; width: 25%;">
+              </div>
+              <div class="store-list-item-info">
+                <span class="store-list-item-name">GRENADE</span>
+                <span class="store-list-item-price">
+                  <img src="/assets/images/lobby/cash.webp" class="store-list-price-icon" alt="">
+                  <span>2,500</span>
+                  <span class="store-item-count"></span>
+                </span>
+              </div>
+              <div class="store-list-item-arrow">›</div>
+            </div>
+
+            <div class="store-list-item" data-item="ammo" data-category="powerups"
+              data-glb="/assets/guns/ammo_pickup.glb" data-price="1000" data-name="AMMO PACK" style="display:none">
+              <div class="store-list-item-icon-wrap">
+                <img src="/assets/images/overlays/ammo-box.webp" class="store-list-icon" alt="Ammo Pack" style="aspect-ratio: 1/1; width: 25%;">
+              </div>
+              <div class="store-list-item-info">
+                <span class="store-list-item-name">AMMO PACK</span>
+                <span class="store-list-item-price">
+                  <img src="/assets/images/lobby/cash.webp" class="store-list-price-icon" alt="">
+                  <span>1,000</span>
+                  <span class="store-item-count"></span>
+                </span>
+              </div>
+              <div class="store-list-item-arrow">›</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION 3: 3D Preview + Buy panel -->
+        <div id="store-preview-panel">
+          <div id="store-preview-inner">
+            <div id="store-preview-label-wrap">
+              <span id="store-preview-name">SELECT AN ITEM</span>
+              <span id="store-preview-subtitle">Choose from the list</span>
+            </div>
+
+            <!-- 3D canvas container -->
+            <div id="store-3d-wrap">
+              <canvas id="store-3d-canvas"></canvas>
+              <div id="store-3d-hint">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)"
+                  stroke-width="2">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
+                  <path d="M12 8v4l3 3" />
+                </svg>
+                <span>Drag to rotate</span>
+              </div>
+            </div>
+
+            <!-- Price & buy area -->
+            <div id="store-preview-buy-area">
+              <div id="store-preview-price">
+                <img src="/assets/images/lobby/cash.webp" id="store-preview-price-icon" alt="">
+                <span id="store-preview-price-val">—</span>
+              </div>
+              <button id="store-preview-buy-btn" disabled>
+                <img src="/assets/images/lobby/start-yellow-bg.webp" class="store-buy-bg" alt="">
+                <span class="store-buy-text" id="store-preview-buy-text">BUY</span>
+              </button>
+            </div>
+
+            <!-- Legacy hidden store-item divs for JS compat (buy buttons wired from store.js) -->
+            <div style="display:none" id="store-legacy-items">
+              <div class="store-item" data-item="rifle">
+                <button class="store-buy-btn"><span class="store-buy-text"></span><span class="store-item-count"
+                    style="display:none"></span></button>
+              </div>
+              <div class="store-item" data-item="sniper">
+                <button class="store-buy-btn"><span class="store-buy-text"></span><span class="store-item-count"
+                    style="display:none"></span></button>
+              </div>
+              <div class="store-item" data-item="mac10">
+                <button class="store-buy-btn"><span class="store-buy-text"></span><span class="store-item-count"
+                    style="display:none"></span></button>
+              </div>
+              <div class="store-item" data-item="shotgun">
+                <button class="store-buy-btn"><span class="store-buy-text"></span><span class="store-item-count"
+                    style="display:none"></span></button>
+              </div>
+              <div class="store-item" data-item="rocketlauncher">
+                <button class="store-buy-btn"><span class="store-buy-text"></span><span class="store-item-count"
+                    style="display:none"></span></button>
+              </div>
+              <div class="store-item" data-item="grenade">
+                <button class="store-buy-btn"><span class="store-buy-text"></span><span
+                    class="store-item-count"></span></button>
+              </div>
+              <div class="store-item" data-item="ammo">
+                <button class="store-buy-btn"><span class="store-buy-text"></span><span
+                    class="store-item-count"></span></button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /#store-body -->
+    </div><!-- /#store-screen -->
+
+    <!-- ══════════════════════════════
+         WEAPON SELECT POPUP (Lobby)
+    ══════════════════════════════ -->
+    <div id="weapon-select-screen" style="display:none">
+      <div id="weapon-select-popup">
+        <img src="/assets/images/overlays/square-white-bg.webp" id="weapon-select-bg-img" alt="">
+
+        <div id="weapon-select-title-wrap">
+          <span class="weapon-select-title-text">SELECT WEAPONS</span>
+        </div>
+
+        <div id="weapon-select-options"></div>
+
+        <button id="weapon-select-continue-btn">
+          <img src="/assets/images/lobby/start-yellow-bg.webp" alt="" class="go-btn-bg">
+          <span class="go-btn-text">CONTINUE</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- WAVE CLEAR BANNER -->
+    <div id="wave-clear-msg" style="display:none">
+      <span>WAVE CLEAR!</span>
+    </div>
+
+    <!-- ADVANCE BUTTON (3D orange) -->
+    <div id="advance-btn" style="display:none">
+      <button class="big-btn orange-btn">
+        <span class="btn-face">NEXT WAVE</span>
+      </button>
+    </div>
+
+
+    <!-- SNIPER SCOPE OVERLAY (shown via body.sniper-scoped class) -->
+    <div id="sniper-scope">
+      <!-- Off-screen Enemy Direction Arrow Guide (visible only during Sniper ADS) -->
+      <div id="sniper-direction-guide"
+        style="position:fixed;inset:0;pointer-events:none;z-index:210;opacity:0;transition:opacity 0.15s ease;">
+        <svg id="sniper-dir-arrow" width="90" height="36" viewBox="0 0 100 40"
+          style="position:absolute;top:0;left:0;transform-origin:50px 18px;filter:drop-shadow(0 0 8px rgba(255,255,255,0.95)) drop-shadow(0 0 14px rgba(255,220,100,0.7));">
+          <path d="M 5 8 Q 50 22 95 8 Q 70 24 50 38 Q 30 24 5 8 Z" fill="#ffffff" />
+        </svg>
+      </div>
+
+      <!--
+        NO mask divs needed.
+        The .scope-lens is a circle (border-radius:50%).
+        Its box-shadow spreads 100vmax outward -> perfectly blacks out
+        everything outside the circle with zero corner artifacts.
+      -->
+      <div class="scope-lens">
+        <!-- Reticle SVG -->
+        <svg class="scope-reticle" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Full cross-hairs stopping just before centre -->
+          <line x1="200" y1="4" x2="200" y2="158" stroke="rgba(0,0,0,0.88)" stroke-width="1.6" />
+          <line x1="200" y1="242" x2="200" y2="396" stroke="rgba(0,0,0,0.88)" stroke-width="1.6" />
+          <line x1="4" y1="200" x2="158" y2="200" stroke="rgba(0,0,0,0.88)" stroke-width="1.6" />
+          <line x1="242" y1="200" x2="396" y2="200" stroke="rgba(0,0,0,0.88)" stroke-width="1.6" />
+          <!-- Mil-dot horizontal ticks -->
+          <line x1="130" y1="194" x2="130" y2="206" stroke="rgba(0,0,0,0.75)" stroke-width="1.2" />
+          <line x1="158" y1="196" x2="158" y2="204" stroke="rgba(0,0,0,0.6)" stroke-width="0.9" />
+          <line x1="242" y1="196" x2="242" y2="204" stroke="rgba(0,0,0,0.6)" stroke-width="0.9" />
+          <line x1="270" y1="194" x2="270" y2="206" stroke="rgba(0,0,0,0.75)" stroke-width="1.2" />
+          <!-- Mil-dot vertical ticks -->
+          <line x1="194" y1="130" x2="206" y2="130" stroke="rgba(0,0,0,0.75)" stroke-width="1.2" />
+          <line x1="196" y1="158" x2="204" y2="158" stroke="rgba(0,0,0,0.6)" stroke-width="0.9" />
+          <line x1="196" y1="242" x2="204" y2="242" stroke="rgba(0,0,0,0.6)" stroke-width="0.9" />
+          <line x1="194" y1="270" x2="206" y2="270" stroke="rgba(0,0,0,0.75)" stroke-width="1.2" />
+          <!-- Red centre dot -->
+          <circle cx="200" cy="200" r="2.2" fill="rgba(230,40,40,0.95)" />
+          <!-- Lens reflection arc -->
+          <path d="M 90 110 Q 200 78 310 110" stroke="rgba(255,255,255,0.045)" stroke-width="20" fill="none"
+            stroke-linecap="round" />
+        </svg>
+        <!-- Dark vignette at lens edges -->
+        <div class="scope-vignette"></div>
+        <!-- Glare highlight top-left -->
+        <div class="scope-glare"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MOBILE CONTROLS
+    ══════════════════════════════════════════ -->
+    <div id="mobile-controls">
+      <div id="left-controls-container">
+        <button id="scope-btn" type="button">
+          <svg class="scope-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF80"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="22" y1="12" x2="18" y2="12"></line>
+            <line x1="6" y1="12" x2="2" y2="12"></line>
+            <line x1="12" y1="6" x2="12" y2="2"></line>
+            <line x1="12" y1="22" x2="12" y2="18"></line>
+          </svg>
+          <span class="scope-label" id="scope-label-text">SCOPE</span>
+        </button>
+        <!-- Cancel button — only visible in Joystick Fire mode while holding fire button -->
+        <button id="cancel-aim-btn" type="button" aria-label="Cancel aim">
+          <svg width="24" height="24" viewBox="0 0 22 22" fill="none" stroke="#fff" stroke-width="2.5"
+            stroke-linecap="round">
+            <line x1="4" y1="4" x2="18" y2="18" />
+            <line x1="18" y1="4" x2="4" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div id="fire-btn-base"></div>
+      <button id="fire-btn" type="button">
+        <img src="./assets/images/bullet.png" width="26" height="26" class="scale-x-[-1] absolute">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+          <circle cx="100" cy="100" r="90" fill="none" stroke="#fff" stroke-width="6" />
+          <circle cx="100" cy="100" r="82" fill="none" stroke="#fff" stroke-width="2" opacity="0.4" />
+          <circle cx="100" cy="100" r="74" fill="#fff" opacity="0.08" />
+          <path id="textArc" d="M 35,130 A 75,75 0 0,0 165,130" fill="none" />
+          <text font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold" fill="#fff"
+            letter-spacing="8">
+            <textPath href="#textArc" startOffset="50%" text-anchor="middle">FIRE</textPath>
+          </text>
+        </svg>
+      </button>
+    </div>
+
+    <!-- BOTTOM-LEFT: Weapon Switch Button (visible on all devices) -->
+    <div id="weapon-switch-btn" data-active="0">
+      <div class="wsb-guns-container">
+        <img src="/assets/images/overlays/ak47.webp" id="gun-img-0" class="gun-img" alt="AK47">
+        <img src="/assets/images/overlays/awm.webp" id="gun-img-1" class="gun-img" alt="AWM">
+      </div>
+      <div class="wsb-hint">TAB</div>
+    </div>
+
+  </div><!-- /hud -->
+
+  <!-- Lobby responsive scale: computes --lobby-scale CSS variable for card scaling below 960px -->
+  <script>
+    (function () {
+      function updateVisibleHeight() {
+        var h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        document.documentElement.style.setProperty('--visible-vh', h + 'px');
+      }
+
+      function updateLobbyScale() {
+        var w = window.innerWidth;
+        var s = w >= 960 ? 1 : Math.max(0.5, w / 960);
+        document.documentElement.style.setProperty('--lobby-scale', s);
+      }
+      window.addEventListener('resize', function () {
+        updateVisibleHeight();
+        updateLobbyScale();
+      });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', updateVisibleHeight);
+        window.visualViewport.addEventListener('scroll', updateVisibleHeight);
+      }
+      updateVisibleHeight();
+      updateLobbyScale();
+    })();
+  </script>
+
+  <!-- ══════════════════════════════════════════
+       TUTORIAL OVERLAY — hidden by default
+  ══════════════════════════════════════════ -->
+  <div id="tutorial-overlay">
+    <div id="tutorial-highlight"></div>
+    <div id="tutorial-message">
+      <div class="tutorial-message-title"></div>
+      <div class="tutorial-message-desc"></div>
+    </div>
+    <div id="tutorial-freeze"></div>
+    <div id="tutorial-hand">
+      <svg viewBox="0 0 256 256" style="filter: drop-shadow(0px 6px 16px rgba(0,0,0,0.5));">
+        <path
+          d="M236.46,128.69a27.65,27.65,0,0,0-16.14-25,27.6,27.6,0,0,0-43.15-18.7,27.53,27.53,0,0,0-40.48-13.82V40a28,28,0,0,0-56,0v87.56L66,116a28,28,0,0,0-36.25,42.54l56,48A84,84,0,0,0,140.43,232H168a84.09,84.09,0,0,0,84-84V136A27.81,27.81,0,0,0,236.46,128.69Z"
+          fill="rgba(255,255,255,0.85)" stroke="rgba(255,255,255,0.3)" stroke-width="8" stroke-linejoin="round"
+          stroke-linecap="round" />
+      </svg>
+    </div>
+    <div id="tutorial-mouse">
+      <svg viewBox="0 0 100 150" style="filter: drop-shadow(0px 8px 12px rgba(0,0,0,0.6));">
+        <rect x="10" y="10" width="80" height="130" rx="40" fill="#ffffff" stroke="#111111" stroke-width="8" />
+        <path id="mouse-btn-left" d="M 50 14 L 50 61 L 14 61 L 14 50 A 36 36 0 0 1 50 14 Z" fill="#ffdb33"
+          opacity="0" />
+        <path id="mouse-btn-right" d="M 50 14 L 50 61 L 86 61 L 86 50 A 36 36 0 0 0 50 14 Z" fill="#ffdb33"
+          opacity="0" />
+        <line x1="50" y1="10" x2="50" y2="65" stroke="#111111" stroke-width="8" />
+        <line x1="10" y1="65" x2="90" y2="65" stroke="#111111" stroke-width="8" />
+        <rect id="mouse-scroll-wheel" x="43" y="25" width="14" height="24" rx="7" fill="#111111" />
+      </svg>
+    </div>
+    <div id="tutorial-keyboard">
+      <svg viewBox="0 0 200 100" style="filter: drop-shadow(0px 8px 12px rgba(0,0,0,0.6));">
+        <rect x="10" y="10" width="180" height="80" rx="10" fill="#ffffff" stroke="#111111" stroke-width="6" />
+        <rect id="key-tab" x="20" y="25" width="45" height="20" rx="4" fill="#ffdb33" stroke="#111111" stroke-width="4"
+          opacity="0" />
+        <text id="text-tab" x="42.5" y="38" font-family="Arial, sans-serif" font-size="12" font-weight="bold"
+          fill="#111111" text-anchor="middle" dominant-baseline="middle" opacity="0">TAB</text>
+        <rect id="key-g" x="80" y="55" width="20" height="20" rx="4" fill="#ffdb33" stroke="#111111" stroke-width="4"
+          opacity="0" />
+        <text id="text-g" x="90" y="68" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#111111"
+          text-anchor="middle" dominant-baseline="middle" opacity="0">G</text>
+        <rect x="75" y="25" width="20" height="20" rx="4" fill="#e0e0e0" stroke="#111111" stroke-width="2" />
+        <rect x="100" y="25" width="20" height="20" rx="4" fill="#e0e0e0" stroke="#111111" stroke-width="2" />
+        <rect x="125" y="25" width="20" height="20" rx="4" fill="#e0e0e0" stroke="#111111" stroke-width="2" />
+        <rect x="150" y="25" width="30" height="20" rx="4" fill="#e0e0e0" stroke="#111111" stroke-width="2" />
+        <rect x="30" y="55" width="40" height="20" rx="4" fill="#e0e0e0" stroke="#111111" stroke-width="2" />
+        <rect x="110" y="55" width="70" height="20" rx="4" fill="#e0e0e0" stroke="#111111" stroke-width="2" />
+      </svg>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,2051 @@
+/* lobby.css — Aesthetic Lobby Styles */
+
+#lobby-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: var(--visible-vh, 100dvh);
+  max-height: var(--visible-vh, 100dvh);
+  z-index: 1000; /* Always above canvas (z-index: 1) and loading screen */
+  background-image: url("/assets/images/lobby/lobby-background.webp");
+  background-size: cover;
+  background-position: center;
+  font-family: "Luckiest Guy", "Baloo 2", cursive;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: min(20px, 4vw);
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: opacity 0.5s ease-in-out;
+  pointer-events: auto; /* Ensure lobby is always interactable when visible */
+}
+
+#lobby-container.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Top Row: Profile & Currency ── */
+.lobby-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 15px;
+  z-index: 20;
+}
+
+.profile-card {
+  width: min(260px, 60vw);
+  /* aspect-ratio keeps bg image uncropped — height auto-derives from width */
+  aspect-ratio: 2.5 / 1;
+  background-image: url("/assets/images/lobby/white-bg-small-2.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  padding: 8px 8px 8px 22px;
+  gap: 10px;
+  color: #333;
+}
+
+.profile-avatar {
+  width: clamp(50px, 10vh, 70px);
+  height: clamp(50px, 10vh, 70px);
+  border-radius: 8px;
+  border: 2px solid #555;
+  object-fit: cover;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(18px, 6vw, 24px);
+  height: clamp(18px, 6vw, 24px);
+  border-radius: 10px;
+  color: #1a1a1a;
+  transform : scaleX(-1);
+  font-size: clamp(16px, 4vw, 18px);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.profile-edit-btn:hover {
+  transform: scale(1.05);
+  filter: brightness(1.05);
+  transform : scaleX(-1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.profile-name {
+  font-size: clamp(18px, 3vw, 20px);
+  letter-spacing: 0.8px;
+  color: #000;
+}
+
+.profile-level-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.level-badge {
+  background: #ffcc00;
+  color: #000;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+  border: 1px solid #000;
+}
+
+.xp-bar-track {
+  width: clamp(60px, 15vw, 100px);
+  height: 10px;
+  background: #444;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.xp-bar-fill {
+  width: 50%;
+  height: 100%;
+  background: #ffaa00;
+}
+
+.currency-wrap {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: start;
+}
+
+.btn-store {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(40px, 6vh, 50px);
+  height: clamp(40px, 6vh, 50px);
+  transition: transform 0.15s ease, filter 0.15s ease;
+  border-radius: 8px;
+}
+
+.btn-store:hover {
+  transform: scale(1.08);
+  filter: brightness(1.1);
+}
+
+.btn-store:active {
+  transform: scale(0.95);
+}
+
+.store-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.currency-item {
+  /* aspect-ratio keeps bg image uncropped — height auto-derives from width */
+  aspect-ratio: 2.6 / 1;
+  min-width: clamp(100px, 18vw, 140px);
+  background-image: url("/assets/images/lobby/white-bg-small.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  padding: 0 10px 6px 10px;
+  gap: 6px;
+  color: #000;
+  border-radius: 8px;
+}
+
+.currency-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.currency-val {
+  font-size: 16px;
+  flex-grow: 1;
+}
+
+.btn-plus {
+  background: linear-gradient(135deg, #ffb700, #ff8c00);
+  border: 1px solid #000;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-plus:hover {
+  transform: scale(1.1);
+  filter: brightness(1.1);
+}
+
+.btn-plus:active {
+  transform: scale(0.95);
+}
+
+/* ── Center: Character & Logo ── */
+.lobby-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  width: 100%;
+  max-width: 600px;
+}
+
+.character-img {
+  max-height: 75vh;
+  width: auto;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.8));
+  margin-bottom: -15%; /* Responsive overlap */
+  z-index: 1;
+}
+
+.center-logo {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(50%);
+  width: min(200px, 35vw);
+  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.6));
+  z-index: 2;
+  margin-top: -5%;
+}
+
+/* ── Side Sections (Stats) ── */
+.lobby-left {
+  position: absolute;
+  left: min(30px, 4vw);
+  top: 60%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: min(25px, 3vh);
+  z-index: 15;
+}
+
+.stat-card {
+  width: clamp(180px, 25vw, 240px);
+  /* aspect-ratio keeps bg image uncropped — height auto-derives from width */
+  aspect-ratio: 2.1 / 1;
+  background-image: url("/assets/images/lobby/white-bg-small.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  gap: 10px;
+  color: #333;
+  border-radius: 10px;
+}
+
+.stat-icon-large {
+  width: clamp(40px, 8vw, 60px);
+  height: clamp(40px, 8vw, 60px);
+  object-fit: contain;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.stat-title {
+  font-size: clamp(12px, 1vw, 18px);
+  color: #555;
+  margin-bottom: 2px;
+  left:35%;
+}
+
+.stat-value-box {
+  /* background: #222; */
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: clamp(16px, 3vw, 22px);
+  text-align: center;
+}
+
+/* ── Bottom Section ── */
+.lobby-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 25vh; /* Fixed height zone for bottom UI */
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 0 20px 20px 20px;
+  box-sizing: border-box;
+}
+
+.settings-btn-wrap {
+  position: absolute;
+  left: min(30px, 4vw);
+  bottom: 20px;
+}
+
+.btn-setting {
+  width: clamp(45px, 8vw, 60px);
+  /* 1:1 aspect-ratio — setting icon is square */
+  aspect-ratio: 1 / 1;
+  background-image: url("/assets/images/lobby/setting.webp");
+  background-size: 100% 100%;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.btn-start-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 30;
+  width: 100%;
+  max-width: 360px;
+}
+
+.btn-start {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 3.2 / 1;
+  background-image: url("/assets/images/lobby/start-yellow-bg.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  /* Mask ensures the shine only shows on non-transparent pixels */
+  -webkit-mask-image: url("/assets/images/lobby/start-yellow-bg.webp");
+  mask-image: url("/assets/images/lobby/start-yellow-bg.webp");
+  -webkit-mask-size: cover;
+  mask-size: cover;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.btn-start::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -150%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(25deg);
+  animation: button-shine 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes button-shine {
+  0% {
+    left: -150%;
+  }
+  50%,
+  100% {
+    left: 150%;
+  }
+}
+
+.btn-start:hover {
+  transform: scale(1.02);
+}
+
+.btn-start span {
+  font-size: clamp(30px, 8vw, 48px);
+  color: #fff;
+  text-shadow: 2px 2px 0px #b08a00;
+  margin-bottom: 5%;
+}
+
+.start-ribbon {
+  width: 100%;
+  max-width: 340px;
+  aspect-ratio: 8.5 / 1.6;
+  background-image: url("/assets/images/lobby/ribbon.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin-top: -5%; /* Overlap more */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  letter-spacing: 0.5px;
+  text-align: center;
+  padding: 0 10px;
+  box-sizing: border-box;
+  z-index: 40; /* Layer over button */
+  position: relative;
+}
+
+.ribbon-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ribbon-svg text {
+  font-family: "Luckiest Guy", "Baloo 2", cursive;
+  font-size: 11px; /* Smaller as requested */
+  fill: #fff;
+}
+
+/* ── Scale-Down for Cards (below 960px) ──
+   Instead of shrinking each property individually (which breaks internal layout),
+   we lock the card to its fixed "design size" and use transform: scale()
+   to proportionally shrink the entire card — text, icons, spacing all scale together.
+   Scale factor is set via --lobby-scale CSS variable (computed by JS).
+*/
+@media (max-width: 960px) {
+  /* ── Stat Cards (Highscore & Max Kills) ── */
+  .stat-card {
+    width: 240px;
+    /* height removed — aspect-ratio: 2.4/1 handles it */
+    padding: 10px;
+    gap: 10px;
+    transform: scale(var(--lobby-scale, 1));
+    transform-origin: left center;
+  }
+
+  .stat-card .stat-icon-large {
+    width: 60px;
+    height: 60px;
+  }
+
+  .stat-card .stat-title {
+    font-size: 18px;
+  }
+
+  .stat-card .stat-value-box {
+    font-size: 22px;
+    padding: 4px 10px;
+  }
+
+  /* ── Profile Card (Player Info) ── */
+  .profile-card {
+    width: 260px;
+    /* height removed — aspect-ratio: 3.5/1 handles it */
+    padding: 8px 8px 8px 22px;
+    gap: 10px;
+    transform: scale(var(--lobby-scale, 1));
+    transform-origin: left top;
+  }
+
+  .profile-card .profile-avatar {
+    width: 70px;
+    height: 70px;
+  }
+
+  .profile-card .profile-name {
+    font-size: 20px;
+  }
+
+  .profile-card .profile-level-wrap {
+    font-size: 14px;
+  }
+
+  /* ── Adjust lobby-left gap to scale with cards ── */
+  .lobby-left {
+    gap: calc(min(25px, 3vh) * var(--lobby-scale, 1));
+  }
+}
+
+/* ── 960px scale block ends above — mobile portrait overrides below ── */
+
+/* ══════════════════════════════════════════════════════
+   MOBILE PORTRAIT — Full vertical flow layout (≤ 480px portrait)
+   Matches the mockup: header → character/logo → stats row → ad → start
+══════════════════════════════════════════════════════ */
+@media (max-width: 480px) and (orientation: portrait) {
+  /* Container becomes a normal vertical flex column */
+  #lobby-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 10px 10px 8px 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    gap: 0;
+  }
+
+  /* ── Header: profile LEFT, currency RIGHT on same row ── */
+  .lobby-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  /* Profile card — left side, normal flow */
+  .profile-card {
+    width: auto;
+    /* height removed — aspect-ratio: 3.5/1 handles it */
+    padding: 6px 28px 6px 18px;
+    gap: 8px;
+    transform: none;
+  }
+
+  .profile-card .profile-avatar {
+    width: 46px;
+    height: 46px;
+  }
+
+  .profile-card .profile-name {
+    font-size: 15px;
+  }
+
+  .profile-card .profile-level-wrap {
+    font-size: 12px;
+    color: #555;
+  }
+
+  /* Currency wrap — right side, vertical stack of 2 items */
+  .currency-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    justify-content: flex-end;
+    align-items: end;
+    flex-shrink: 0;
+  }
+
+  .currency-item {
+    /* height removed — aspect-ratio: 3/1 handles it */
+    min-width: 110px;
+    padding: 0 8px 4px 8px;
+    gap: 5px;
+    font-size: 14px;
+  }
+
+  .currency-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-plus {
+    width: 18px;
+    height: 18px;
+    font-size: 13px;
+  }
+
+  .btn-store {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* ── Center: character + logo — in-flow, not absolute ── */
+  .lobby-center {
+    position: absolute;
+    top: 30%;
+    left: auto;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    /* Controlled height: character takes center stage */
+    height: 48vh;
+    overflow: visible;
+    pointer-events: none;
+    margin-bottom: 4px;
+  }
+
+  .character-img {
+    max-height: 88vh;
+    width: auto;
+    margin-bottom: 0%;
+    z-index: 1;
+  }
+
+  /* Logo — absolute inside .lobby-center on mobile */
+  .center-logo {
+    position: absolute;
+    top: -20px;
+    right: 0px;
+    left: auto;
+    bottom: auto;
+    width: min(155px, 42vw);
+    margin-top: 0;
+    z-index: 2;
+  }
+
+  /* ── Stats row: Highscore + Max Kills side by side, full width ── */
+  .lobby-left {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    width: 100%;
+    justify-content: stretch;
+    align-items: stretch;
+    margin-bottom: 6px;
+    z-index: 15;
+  }
+
+  .stat-card {
+    flex: 1 1 0;
+    width: auto;
+    /* height removed — aspect-ratio: 2.4/1 handles it */
+    padding: 2px 12px 8px 8px;
+    gap: 8px;
+    transform: none;
+    border-radius: 8px;
+    align-items: center;
+  }
+
+  .stat-card .stat-icon-large {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  /* stat-content: normal column flow — title on top, value box below */
+  .stat-card .stat-content {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  /* Title: neutralise Tailwind absolute classes from HTML */
+  .stat-card .stat-title {
+    font-size: 12px;
+    position: static !important;
+    white-space: nowrap;
+    color: #555;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+  }
+
+  /* Dark inner value box wrapper — full width, normal flow */
+  .stat-card .stat-content > div {
+    width: 80% !important;
+    /* height: clamp(10px, 6vh, 40px) !important; */
+    top: 0 !important;
+    position: relative !important;
+  }
+
+  .stat-card .stat-value-box {
+    font-size: clamp(16px, 2vh, 20px);
+    padding: 2px 6px;
+  }
+
+  /* ── Bottom: settings button repositioned, start button full width ── */
+  .lobby-bottom {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 max(12px, env(safe-area-inset-bottom)) 0;
+    margin-top: auto;
+    gap: 0;
+    flex-shrink: 0;
+  }
+
+  /* Settings button — top-left corner, fixed */
+  .settings-btn-wrap {
+    position: fixed;
+    top: 84px; /* below header */
+    left: 10px;
+    bottom: auto;
+    right: auto;
+    z-index: 25;
+  }
+
+  .btn-setting {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Start button — full width */
+  .btn-start-wrap {
+    width: 100%;
+    max-width: min(70%, calc(var(--visible-vh, 100dvh) * 0.42));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-start {
+    width: 100%;
+    max-width: 100%; 
+    aspect-ratio: 3.2 / 1;
+  }
+
+  .btn-start span {
+    font-size: clamp(30px, 10vw, 48px);
+    margin-top: 10px;
+  }
+
+  .start-ribbon {
+    width: 100%;
+    max-width: 100%;
+    margin-top: -3%;
+  }
+}
+
+@media (max-width: 380px) and (orientation: portrait) {
+  .stat-card .stat-content > div {
+    width: 80% !important;
+    /* height: clamp(10px, 4vh, 40px) !important; */
+    top: 0 !important;
+    position: relative !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   LOBBY — Landscape mobile layout  (height ≤ 500px, landscape)
+   Strategy: mirrors the desktop absolute-layout but scales everything
+   via vh so nothing overflows the short viewport.
+   · Header (profile) stays absolute top-left — same as desktop
+   · Logo stays absolute top-right — same as desktop
+   · Character stays absolute-center — same as desktop, max-height clamped
+   · Stats (.lobby-left) stays absolute left, vertically re-centred
+   · Bottom bar stays absolute bottom — same as desktop, just compressed
+   ── Do NOT touch portrait or desktop rules above this block ──
+══════════════════════════════════════════════════════ */
+@media (max-height: 700px) and (orientation: landscape) {
+
+  /* Container: same flex-column base, just let absolute children do the work */
+  #lobby-container {
+    padding: clamp(6px, 1.5vh, 12px) clamp(8px, 2vw, 16px);
+  }
+
+  /* ── Header: stays top-left, smaller overall ── */
+  .lobby-header {
+    gap: 8px;
+    margin-bottom: 0;
+  }
+
+  /* Profile card: same structure, width drives height via aspect-ratio */
+  .profile-card {
+    width: auto;
+    /* height removed — aspect-ratio: 3.5/1 handles it */
+    padding: 4px 16px 4px 14px;
+    gap: 8px;
+    transform: none;
+  }
+
+  .profile-card .profile-avatar {
+    width: clamp(36px, 9vh, 52px);
+    height: clamp(36px, 9vh, 52px);
+  }
+
+  .profile-card .profile-name {
+    font-size: clamp(13px, 3vh, 17px);
+  }
+
+  .profile-card .profile-level-wrap {
+    font-size: clamp(10px, 2vh, 13px);
+  }
+
+  /* ── Logo: centred-right, scales with vh ── */
+  .center-logo {
+    top: 6px;
+    left: 50%;
+    right: auto;
+    transform: translateX(40%);
+    width: clamp(160px, 22vh, 210px);
+  }
+
+  /* ── Character: absolute centre, clamped height so it fits ── */
+  .character-img {
+    max-height: clamp(140px, 78vh, 340px); /* vh-based so it fills nicely */
+    width: auto;
+    margin-bottom: -12%; /* maintain small overlap */
+  }
+
+  /* ── Stats (.lobby-left): absolute left, vertically centred in middle zone ── */
+  .lobby-left {
+    left: clamp(8px, 2vw, 20px);
+    top: 50%;
+    transform: translateY(-50%);
+    gap: clamp(8px, 2vh, 16px);
+  }
+
+  /* Stat cards: width drives height via aspect-ratio */
+  .stat-card {
+    width: clamp(150px, 32vw, 210px);
+    /* height removed — aspect-ratio: 2.4/1 handles it */
+    padding: 4px 10px 4px 8px;
+    gap: 8px;
+    transform: none;
+    border-radius: 8px;
+    align-items: center;
+  }
+
+  .stat-card .stat-icon-large {
+    width: clamp(32px, 10vh, 46px);
+    height: clamp(32px, 10vh, 46px);
+    margin-left: 8px;
+  }
+
+  /* stat-title: neutralise Tailwind absolute classes, same as portrait */
+  .stat-card .stat-title {
+    font-size: clamp(12px, 2vh, 14px);
+    position: static !important;
+    white-space: nowrap;
+    color: #555;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+  }
+
+  /* Dark-inner value box wrapper — normal flow, same as portrait */
+  .stat-card .stat-content {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    transform: translateY(-8px);
+  }
+
+  .stat-card .stat-content > div {
+    width: 80% !important;
+    /* height: clamp(24px, 6vh, 38px) !important; */
+    top: 0 !important;
+    position: relative !important;
+  }
+
+  .stat-card .stat-value-box {
+    font-size: clamp(14px, 3.5vh, 20px);
+    padding: 2px 6px;
+  }
+
+  /* ── Bottom zone: absolute bottom, same as desktop ── */
+  .lobby-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    min-height: clamp(60px, 18vh, 100px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding: 0 20px clamp(8px, 2vh, 16px) 20px;
+  }
+
+  /* Settings button: same absolute left position as desktop */
+  .settings-btn-wrap {
+    position: absolute;
+    left: clamp(8px, 2vw, 20px);
+    bottom: clamp(8px, 2vh, 16px);
+    right: auto;
+    top: auto;
+  }
+
+  .btn-setting {
+    width: clamp(36px, 8vh, 48px);
+    /* height removed — aspect-ratio: 1/1 handles it */
+  }
+
+  /* Start button: centred, aspect-ratio maintained, vh-constrained */
+  .btn-start-wrap {
+    width: 100%;
+    max-width: clamp(200px, 50vw, 300px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-start {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 3.2 / 1;
+    /* mask images are inherited — no change needed */
+  }
+
+  .btn-start span {
+    font-size: clamp(40px, 6vh, 48px);
+    margin-bottom: 4%;
+  }
+
+  /* Ribbon: shrink proportionally */
+  .start-ribbon {
+    width: 100%;
+    max-width: 100%;
+    margin-top: -2%;
+  }
+
+  .ribbon-svg text {
+    font-size: 9px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   SETTINGS POPUP — Same style as Game Over popup
+══════════════════════════════════════════════════════ */
+#settings-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1100; /* Must be above lobby (z-index: 1000) */
+  background: rgba(10, 10, 12, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  padding: 16px;
+  touch-action: manipulation;
+}
+
+#settings-popup {
+  position: relative;
+  width: min(480px, 92vw);
+  aspect-ratio: 1 / 1; /* Force perfect square */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(24px, 5vw, 40px) clamp(20px, 4vw, 40px);
+  border-radius: 12px;
+  overflow: visible; /* Allow close button to be visible */
+  gap: clamp(12px, 2.5vw, 24px);
+}
+
+/* White background image — 1:1 aspect ratio, centered, no cropping */
+#settings-bg-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Since container is 1:1 and image is square, this will fit perfectly */
+  object-fit: cover;
+  z-index: 0;
+  border-radius: 12px;
+  /* Slightly scale up the background image to ensure the text stays well within its borders */
+  transform: scale(1.05);
+}
+
+/* All popup content sits above the bg image */
+#settings-popup > *:not(#settings-bg-img) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Settings title (text-based, no game-over image) ── */
+#settings-title-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: clamp(2px, 1vw, 8px);
+  z-index: 2;
+}
+
+.settings-title-text {
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(32px, 8vw, 42px);
+  letter-spacing: 4px;
+  color: #1a1a1a;
+  text-shadow:
+    1px 2px 0 rgba(255, 255, 255, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+  text-transform: uppercase;
+  animation: settings-title-drop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes settings-title-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Settings Row ── */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: clamp(8px, 2vw, 16px);
+  /* opacity: 0;
+  animation: settings-fade-in 0.5s ease-out forwards; */
+}
+
+#settings-sensitivity-row {
+  animation-delay: 0.3s;
+}
+#settings-music-row {
+  animation-delay: 0.5s;
+}
+#settings-sfx-row {
+  animation-delay: 0.7s;
+}
+#settings-language-row {
+  animation-delay: 0.9s;
+}
+
+@keyframes settings-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settings-label {
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(16px, 4vw, 18px);
+  letter-spacing: 2px;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Slider ── */
+.settings-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 14px);
+  flex-grow: 1;
+  justify-content: flex-end;
+}
+
+.settings-slider-track {
+  position: relative;
+  width: 100%;
+  flex-grow: 1;
+  max-width: 180px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 7px;
+  cursor: pointer;
+  touch-action: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  overflow: visible;
+  pointer-events: auto;
+}
+
+.settings-slider-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(to right, #611010, #470a0a);
+  border-radius: 7px;
+  pointer-events: none;
+  transition: width 0.05s linear;
+}
+
+.settings-slider-thumb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 35% 35%, #971c1c, #670c0c);
+  border: 1px solid #540000;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  cursor: grab;
+  touch-action: none;
+  pointer-events: auto;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+  z-index: 5;
+}
+
+.settings-slider-thumb:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+.settings-slider-value {
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(16px, 4vw, 20px);
+  color: #5f0d0d;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.3);
+  min-width: 42px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Toggle Button ── */
+.settings-toggle-wrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1.5vw, 10px);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  outline: none;
+}
+
+.toggle-track {
+  position: relative;
+  width: clamp(50px, 10vw, 56px);
+  height: clamp(26px, 6vw, 30px);
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 15px;
+  transition: background 0.3s ease;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  width: clamp(20px, 5vw, 22px);
+  height: clamp(20px, 5vw, 22px);
+  background: #ccc;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  transition:
+    left 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ON state */
+.settings-toggle[data-on="true"] .toggle-track {
+  background: rgba(0, 90, 3, 0.59);
+  border-color: rgba(0, 74, 3, 0.71);
+}
+
+.settings-toggle[data-on="true"] .toggle-knob {
+  left: calc(100% - clamp(24px, 6vw, 26px));
+  background: #005203;
+  box-shadow: 0 2px 8px rgba(0, 50, 2, 0.5);
+}
+
+/* OFF state */
+.settings-toggle[data-on="false"] .toggle-track {
+  background: rgba(0, 0, 0, 0.415);
+  border-color: rgba(0, 0, 0, 0.518);
+}
+
+.settings-toggle[data-on="false"] .toggle-knob {
+  left: 4px;
+  background: #3b3737;
+  box-shadow: 0 1px 4px rgba(61, 61, 61, 0.3);
+}
+
+.toggle-label {
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(14px, 3.5vw, 16px);
+  letter-spacing: 1px;
+  color: #5f0d0d;
+  text-transform: uppercase;
+  min-width: 28px;
+}
+
+.settings-toggle[data-on="false"] .toggle-label {
+  color: #3d3939c0;
+}
+
+/* ── Select Dropdown ── */
+.settings-select-wrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.settings-select {
+  padding: clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 12px);
+  background-color: rgb(42, 27, 9);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(12px, 3vw, 16px);
+  color: #f3be0a;
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+  min-width: clamp(140px, 25vw, 200px);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  user-select: auto;
+  -webkit-user-select: auto;
+}
+
+.settings-select:hover {
+  background-color: rgb(42, 27, 9);
+  border-color: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.settings-select:focus {
+  outline: none;
+  border-color: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.settings-select option {
+  background-color: rgb(56, 40, 18);
+  color: #f3be0a;
+  padding: 8px;
+}
+
+.settings-select::-webkit-scrollbar {
+  width: 0px;
+}
+
+/* ── Close button — dark theme for visibility on white background ── */
+#settings-close-btn,
+.settings-close-btn {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0;
+  margin-top: clamp(4px, 1vw, 8px);
+  overflow: hidden;
+  border-radius: 8px;
+  min-width: clamp(160px, 40vw, 220px);
+  height: clamp(44px, 9vw, 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* opacity: 0;
+  animation: settings-fade-in 0.5s ease-out 1.1s forwards; */
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+#settings-close-btn:hover {
+  transform: scale(1.05);
+  filter: brightness(1.15);
+}
+
+#settings-close-btn:active {
+  transform: scale(0.97);
+}
+
+/* Close button text — dark color for contrast on yellow bg */
+#settings-close-btn .go-btn-text {
+  color: #1a1a1a;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+#player-name-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(10, 10, 12, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  padding: 16px;
+  touch-action: manipulation;
+}
+
+#player-name-popup {
+  position: relative;
+  width: min(480px, 92vw);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(24px, 5vw, 40px) clamp(20px, 4vw, 40px);
+  border-radius: 12px;
+  overflow: visible;
+  gap: clamp(12px, 2.5vw, 24px);
+}
+
+#player-name-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  border-radius: 12px;
+  transform: scale(1.05);
+}
+
+#player-name-popup > *:not(#player-name-bg-img) {
+  position: relative;
+  z-index: 1;
+}
+
+#player-name-title-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: clamp(2px, 1vw, 8px);
+  z-index: 2;
+}
+.name-input-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+#player-name-img {
+  position: absolute;
+  background: red;
+  height: clamp(40px, 8vw, 50px);
+  object-fit: cover;
+}
+
+#player-name-input {
+  width: 100%;
+  max-width: 240px;
+  min-width: 160px;
+  padding: clamp(12px, 2vw, 16px);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(65, 40, 7, 0.92);
+  color: #ffffff;
+  font-family: "Luckiest Guy", "Baloo 2", "Impact", "Arial Black", sans-serif;
+  font-size: clamp(16px, 4vw, 18px);
+  letter-spacing: 1px;
+  outline: none;
+  text-transform: none;
+}
+
+#player-name-input::placeholder {
+  color: rgba(255, 255, 255, 0.684);
+}
+
+#player-name-row {
+  animation-delay: 0.3s;
+}
+
+/* ── Responsive: Mobile portrait ── */
+@media (max-width: 480px) {
+  #settings-popup {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .settings-title-text {
+    font-size: clamp(24px, 7vw, 32px);
+  }
+
+  .settings-row {
+    padding: 8px 10px;
+  }
+
+  .settings-slider-track {
+    max-width: none;
+  }
+
+  .settings-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  #settings-close-btn {
+    min-width: 140px;
+    height: 40px;
+  }
+}
+
+/* ── Responsive: Very small screens ── */
+@media (max-width: 360px) {
+  #settings-popup {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .settings-row {
+    padding: 6px 8px;
+  }
+}
+
+/* ── Responsive: Landscape mobile ── */
+/* ══════════════════════════════════════════════════════
+   SETTINGS POPUP — Landscape mobile layout (height ≤ 500px)
+   ══════════════════════════════════════════════════════ */
+@media (max-height: 500px) and (orientation: landscape) {
+  #settings-popup {
+    /* Explicitly lock width and height to the same vh clamp to preserve a perfect square */
+    width: clamp(240px, 82vh, 420px);
+    height: clamp(240px, 82vh, 420px);
+    aspect-ratio: 1 / 1 !important; 
+    
+    /* Condense padding and layout gaps to fit entirely inside the smaller square box */
+    padding: clamp(8px, 3vh, 14px) clamp(16px, 4vw, 24px);
+    gap: clamp(2px, 1vh, 6px);
+    justify-content: center;
+  }
+
+  /* Snaps the 1:1 image cleanly to the 1:1 box boundaries with 0% cropping */
+  #settings-bg-img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    transform: scale(1.01); /* Standard tiny layout bleed override to anchor edges */
+  }
+
+  /* Compact Title adjustments */
+  #settings-title-wrap {
+    margin-bottom: 0;
+  }
+
+  .settings-title-text {
+    font-size: clamp(16px, 5.5vh, 24px);
+    letter-spacing: 1.5px;
+  }
+
+  /* Ultra-slim settings layout items */
+  .settings-row {
+    padding: 0;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .settings-label {
+    font-size: clamp(11px, 3.5vh, 14px);
+    letter-spacing: 0.5px;
+  }
+
+  /* Compact Sliders */
+  .settings-slider-wrap {
+    gap: 6px;
+  }
+
+  .settings-slider-track {
+    height: 8px;
+    max-width: 110px;
+    border-radius: 4px;
+  }
+
+  .settings-slider-fill {
+    border-radius: 4px;
+  }
+
+  .settings-slider-thumb {
+    width: 16px;
+    height: 16px;
+  }
+
+  .settings-slider-value {
+    font-size: clamp(11px, 3.5vh, 14px);
+    min-width: 28px;
+  }
+
+  /* Compact Switch Toggles */
+  .toggle-track {
+    width: clamp(36px, 9vh, 42px);
+    height: clamp(18px, 5vh, 22px);
+    border-radius: 10px;
+  }
+
+  .toggle-knob {
+    width: clamp(12px, 3.5vh, 14px);
+    height: clamp(12px, 3.5vh, 14px);
+    left: 2px;
+  }
+
+  .settings-toggle[data-on="true"] .toggle-knob {
+    left: calc(100% - clamp(14px, 4vh, 16px));
+  }
+
+  .toggle-label {
+    font-size: clamp(10px, 3vh, 12px);
+    min-width: 20px;
+  }
+
+  /* Micro close button layout adjustment */
+  #settings-close-btn,
+  .settings-close-btn {
+    height: clamp(28px, 8vh, 36px);
+    min-width: 120px;
+    margin-top: 2px;
+  }
+}
+
+/* ── Responsive: Desktop large screens ── */
+@media (min-width: 1200px) {
+  #settings-popup {
+    width: 520px;
+    padding: 40px;
+    gap: 28px;
+  }
+}
+
+
+/* profile rename popup */
+
+/* ══════════════════════════════════════════════════════
+   PLAYER NAME POPUP — Landscape mobile layout (height ≤ 500px)
+   ══════════════════════════════════════════════════════ */
+@media (max-height: 500px) and (orientation: landscape) {
+  #player-name-popup {
+    /* Explicitly lock width and height to the same vh clamp to preserve a perfect square */
+    width: clamp(240px, 82vh, 420px);
+    height: clamp(240px, 82vh, 420px);
+    aspect-ratio: 1 / 1 !important;
+
+    /* Condense padding and layout gaps to fit entirely inside the smaller square box */
+    padding: clamp(8px, 3vh, 14px) clamp(16px, 4vw, 24px);
+    gap: clamp(6px, 1.5vh, 12px);
+    justify-content: center;
+  }
+
+  /* Snaps the 1:1 image cleanly to the 1:1 box boundaries with 0% cropping */
+  #player-name-bg-img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    transform: scale(1.01); /* Standard tiny layout bleed override to anchor edges */
+  }
+
+  /* Compact Title adjustments */
+  #player-name-title-wrap {
+    margin-bottom: 0;
+  }
+
+  /* Target any heading text inside the title wrap using height-based scaling */
+  #player-name-title-wrap .settings-title-text,
+  #player-name-title-wrap h2,
+  #player-name-title-wrap [class*="title"] {
+    font-size: clamp(16px, 5.5vh, 24px);
+    letter-spacing: 1.5px;
+  }
+
+  /* Slim down the name entry layout */
+  .name-input-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  #player-name-input {
+    width: 100%;
+    max-width: 200px;
+    min-width: 140px;
+    /* Condense vertical padding using vh to save screen real estate */
+    padding: clamp(6px, 1.8vh, 10px) clamp(10px, 2vw, 14px);
+    border-radius: 8px;
+    font-size: clamp(12px, 3.5vh, 15px);
+    letter-spacing: 0.5px;
+  }
+
+  /* Shrink decorative input image elements safely if rendered */
+  #player-name-img {
+    height: clamp(24px, 6vh, 34px);
+  }
+
+  /* If you share or use a close/save button inside this popup */
+  #player-name-popup button,
+  #player-name-popup .settings-close-btn {
+    height: clamp(28px, 8vh, 36px);
+    min-width: 120px;
+    margin-top: 2px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   LOBBY — SHORT LANDSCAPE  (height ≤ 500px)
+   Tightens the 700px block. Works down to ~320px height.
+   Strategy:
+   · Header row: single tight line — profile card + currency side by side
+   · Character: capped at 65vh so it doesn't eat all vertical space
+   · Logo: repositioned to top-right, small
+   · Stats: stay left-side column, very compact
+   · Bottom: start button + settings, everything vh-based
+   · Currency wrap: hide store icon label, shrink icons
+══════════════════════════════════════════════════════ */
+@media (max-height: 500px) and (orientation: landscape) {
+
+  #lobby-container {
+    padding: 4px clamp(6px, 1.5vw, 12px);
+  }
+
+  /* ── Header row: tighter ── */
+  .lobby-header {
+    gap: 5px;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  /* Profile card: single-line, very compact */
+  .profile-card {
+    /* height removed — aspect-ratio: 3.5/1 handles it */
+    padding: 3px 10px 3px 10px;
+    gap: 6px;
+    width: auto;
+    transform: none;
+  }
+
+  .profile-card .profile-avatar {
+    width: clamp(28px, 7vh, 40px);
+    height: clamp(28px, 7vh, 40px);
+  }
+
+  .profile-card .profile-name {
+    font-size: clamp(11px, 2.5vh, 14px);
+  }
+
+  .profile-card .profile-level-wrap {
+    font-size: clamp(9px, 1.8vh, 11px);
+  }
+
+  /* Currency wrap: compact row */
+  .currency-wrap {
+    flex-direction: row;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .currency-item {
+    /* height removed — aspect-ratio: 3/1 handles it */
+    min-width: 90px;
+    padding: 0 6px 2px 6px;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .currency-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .btn-plus {
+    width: 16px;
+    height: 16px;
+    font-size: 12px;
+  }
+
+  .btn-store {
+    width: clamp(28px, 7vh, 38px);
+    height: clamp(28px, 7vh, 38px);
+  }
+
+  /* ── Logo: centred-right, compact ── */
+  .center-logo {
+    top: 4px;
+    left: 50%;
+    right: auto;
+    transform: translateX(20%);
+    width: clamp(110px, 18vh, 160px);
+  }
+
+  /* ── Character: tighter cap so bottom UI still shows ── */
+  .character-img {
+    max-height: clamp(120px, 65vh, 260px);
+    margin-bottom: -8%;
+  }
+
+  /* ── Stats: left column, tighter ── */
+  .lobby-left {
+    left: clamp(6px, 1.5vw, 14px);
+    top: 50%;
+    transform: translateY(-50%);
+    gap: clamp(4px, 1.2vh, 10px);
+  }
+
+  .stat-card {
+    width: clamp(130px, 26vw, 190px);
+    /* height removed — aspect-ratio: 2.4/1 handles it */
+    padding: 3px 8px 3px 6px;
+    gap: 5px;
+    transform: none;
+    border-radius: 6px;
+    align-items: center;
+  }
+
+  .stat-card .stat-icon-large {
+    width: clamp(24px, 7vh, 36px);
+    height: clamp(24px, 7vh, 36px);
+    margin-left: 4px;
+  }
+
+  .stat-card .stat-title {
+    font-size: clamp(9px, 1.8vh, 12px);
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    white-space: nowrap;
+    color: #555;
+  }
+
+  .stat-card .stat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    transform: translateY(-4px);
+  }
+
+  .stat-card .stat-content > div {
+    width: 85% !important;
+    /* height: clamp(18px, 5vh, 28px) !important; */
+    top: 0 !important;
+    position: relative !important;
+  }
+
+  .stat-card .stat-value-box {
+    font-size: clamp(11px, 2.8vh, 16px);
+    padding: 1px 4px;
+  }
+
+  /* ── Bottom zone: tighter ── */
+  .lobby-bottom {
+    min-height: clamp(44px, 14vh, 72px);
+    padding: 0 12px clamp(4px, 1.5vh, 10px) 12px;
+  }
+
+  .settings-btn-wrap {
+    left: clamp(6px, 1.5vw, 14px);
+    bottom: clamp(4px, 1.5vh, 10px);
+  }
+
+  .btn-setting {
+    width: clamp(28px, 7vh, 40px);
+    /* height removed — aspect-ratio: 1/1 handles it */
+  }
+
+  .btn-start-wrap {
+    max-width: clamp(160px, 40vw, 260px);
+  }
+
+  .btn-start {
+    aspect-ratio: 3.2 / 1;
+  }
+
+  .btn-start span {
+    font-size: clamp(22px, 5vh, 36px);
+    margin-bottom: 2%;
+  }
+
+  .start-ribbon {
+    margin-top: -2%;
+    max-width: 100%;
+  }
+
+  .ribbon-svg text {
+    font-size: 8px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   LOBBY — VERY SHORT LANDSCAPE (height ≤ 380px)
+   Handles 300–380px. Extreme compression — everything
+   is at its absolute minimum usable size.
+══════════════════════════════════════════════════════ */
+@media (max-height: 380px) and (orientation: landscape) {
+
+  #lobby-container {
+    padding: 3px clamp(4px, 1vw, 8px);
+  }
+
+  /* Profile card: ultra-compact */
+  .profile-card {
+    /* height removed — aspect-ratio: 3.5/1 handles it */
+    padding: 2px 8px 2px 8px;
+    gap: 4px;
+  }
+
+  .profile-card .profile-avatar {
+    width: clamp(22px, 6.5vh, 32px);
+    height: clamp(22px, 6.5vh, 32px);
+  }
+
+  .profile-card .profile-name {
+    font-size: clamp(9px, 2.2vh, 12px);
+  }
+
+  .profile-card .profile-level-wrap {
+    font-size: clamp(8px, 1.6vh, 10px);
+  }
+
+  /* Currency: icon-only, minimum */
+  .currency-item {
+    /* height removed — aspect-ratio: 3/1 handles it */
+    min-width: 76px;
+    padding: 0 4px 1px 4px;
+    gap: 3px;
+    font-size: 11px;
+  }
+
+  .currency-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .btn-plus {
+    width: 14px;
+    height: 14px;
+    font-size: 10px;
+  }
+
+  .btn-store {
+    width: clamp(24px, 6vh, 32px);
+    height: clamp(24px, 6vh, 32px);
+  }
+
+  /* Logo: centred-right, minimum size */
+  .center-logo {
+    top: 2px;
+    left: 50%;
+    right: auto;
+    transform: translateX(20%);
+    width: clamp(80px, 14vh, 120px);
+  }
+
+  /* Character: strict cap */
+  .character-img {
+    max-height: clamp(100px, 58vh, 200px);
+    margin-bottom: -6%;
+  }
+
+  /* Stats column: very tight */
+  .lobby-left {
+    left: 4px;
+    gap: clamp(3px, 1vh, 7px);
+  }
+
+  .stat-card {
+    width: clamp(110px, 22vw, 160px);
+    /* height removed — aspect-ratio: 2.4/1 handles it */
+    padding: 2px 6px 2px 4px;
+    gap: 4px;
+    border-radius: 5px;
+  }
+
+  .stat-card .stat-icon-large {
+    width: clamp(18px, 6vh, 28px);
+    height: clamp(18px, 6vh, 28px);
+    margin-left: 2px;
+  }
+
+  .stat-card .stat-title {
+    font-size: clamp(8px, 1.6vh, 10px);
+  }
+
+  .stat-card .stat-content {
+    transform: translateY(-3px);
+  }
+
+  .stat-card .stat-content > div {
+    width: 85% !important;
+    /* height: clamp(14px, 4vh, 22px) !important; */
+  }
+
+  .stat-card .stat-value-box {
+    font-size: clamp(9px, 2.4vh, 13px);
+    padding: 1px 2px;
+  }
+
+  /* Bottom zone: absolute minimum */
+  .lobby-bottom {
+    min-height: clamp(36px, 12vh, 56px);
+    padding: 0 8px clamp(3px, 1vh, 7px) 8px;
+  }
+
+  .settings-btn-wrap {
+    left: 4px;
+    bottom: clamp(3px, 1vh, 7px);
+  }
+
+  .btn-setting {
+    width: clamp(22px, 6vh, 32px);
+    /* height removed — aspect-ratio: 1/1 handles it */
+  }
+
+  .btn-start-wrap {
+    max-width: clamp(130px, 34vw, 220px);
+  }
+
+  .btn-start span {
+    font-size: clamp(16px, 4vh, 26px);
+    margin-bottom: 1%;
+  }
+
+  /* Keep ribbon visible at minimum size */
+  .start-ribbon {
+    display: flex;
+    max-width: 100%;
+    margin-top: -3%;
+  }
+
+  .ribbon-svg text {
+    font-size: 7px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   SETTINGS & PLAYER-NAME POPUPS — extra-tight (≤ 380px)
+   The existing ≤500px block handles 380-500px fine.
+   This block squeezes further for 300-380px screens.
+══════════════════════════════════════════════════════ */
+@media (max-height: 380px) and (orientation: landscape) {
+
+  #settings-popup,
+  #player-name-popup {
+    width: clamp(220px, 78vh, 340px);
+    height: clamp(220px, 78vh, 340px);
+    padding: clamp(6px, 2.5vh, 10px) clamp(12px, 3vw, 18px);
+    gap: clamp(2px, 0.8vh, 5px);
+  }
+
+  .settings-title-text,
+  #player-name-title-wrap .settings-title-text {
+    font-size: clamp(13px, 4.5vh, 18px);
+    letter-spacing: 1px;
+  }
+
+  .settings-label {
+    font-size: clamp(9px, 2.8vh, 12px);
+    letter-spacing: 0.3px;
+  }
+
+  .settings-slider-track {
+    height: 6px;
+    max-width: 90px;
+  }
+
+  .settings-slider-thumb {
+    width: 12px;
+    height: 12px;
+  }
+
+  .settings-slider-value {
+    font-size: clamp(9px, 2.8vh, 12px);
+    min-width: 22px;
+  }
+
+  .toggle-track {
+    width: clamp(30px, 8vh, 36px);
+    height: clamp(15px, 4.5vh, 18px);
+  }
+
+  .toggle-knob {
+    width: clamp(10px, 3vh, 12px);
+    height: clamp(10px, 3vh, 12px);
+  }
+
+  .settings-toggle[data-on="true"] .toggle-knob {
+    left: calc(100% - clamp(12px, 3.5vh, 14px));
+  }
+
+  .toggle-label {
+    font-size: clamp(8px, 2.5vh, 10px);
+    min-width: 16px;
+  }
+
+  .settings-select {
+    font-size: clamp(9px, 2.8vh, 12px);
+    padding: clamp(3px, 1vh, 6px) clamp(4px, 1.2vw, 8px);
+    min-width: clamp(100px, 20vw, 150px);
+  }
+
+  #settings-close-btn,
+  .settings-close-btn,
+  #player-name-popup button {
+    height: clamp(22px, 6.5vh, 30px);
+    min-width: 90px;
+    margin-top: 1px;
+  }
+
+  #player-name-input {
+    padding: clamp(4px, 1.4vh, 8px) clamp(6px, 1.5vw, 10px);
+    font-size: clamp(10px, 3vh, 13px);
+    max-width: 170px;
+    border-radius: 6px;
+  }
+}
