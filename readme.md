@@ -17,3 +17,10 @@ git diff --name-only HEAD | xargs -I{} bash -c 'mkdir -p "/destination/folder/$(
 
 
 https://filebin.net/3rh1trktxm5yjntn
+
+
+@media (hover: none) and (pointer: coarse) {
+  .currency-val {
+    padding-top: 4px;
+  }
+}
